@@ -52,46 +52,58 @@
       return Math.round(R * c);
     }
 
-    // --- BULLETPROOF IMAGE COMPONENT (Bypasses w.wiki/GHai & Hotlink Blocks) ---
-    function ProxyImage({ file, alt, className }) {
-      const getSources = (fn) => {
-        if (!fn) return [];
-        if (fn.startsWith('http')) {
-          const encoded = encodeURIComponent(fn);
-          return [
-            `https://wsrv.nl/?url=${encoded}&w=800&output=jpg`,
-            fn
-          ];
-        }
-        const cleanFn = encodeURIComponent(fn);
-        return [
-          // 1. Cloudflare wsrv.nl proxy requesting raw full file (never triggers thumbnail size restrictions)
-          `https://wsrv.nl/?url=https://commons.wikimedia.org/wiki/Special:FilePath/${cleanFn}&w=800&output=jpg`,
-          // 2. Secondary weserv mirror
-          `https://images.weserv.nl/?url=https://commons.wikimedia.org/wiki/Special:FilePath/${cleanFn}&w=800&output=jpg`,
-          // 3. Direct Wikimedia Special:FilePath with standard 640px tier
-          `https://commons.wikimedia.org/wiki/Special:FilePath/${cleanFn}?width=640`
-        ];
-      };
-
-      const sources = getSources(file);
-      const [index, setIndex] = useState(0);
+    // --- LIVE WIKIPEDIA PHOTO RESOLVER COMPONENT ---
+    function WikiImage({ wiki, alt, className }) {
+      const [imgUrl, setImgUrl] = useState(null);
+      const [loading, setLoading] = useState(true);
 
       useEffect(() => {
-        setIndex(0);
-      }, [file]);
+        let active = true;
+        setLoading(true);
+        setImgUrl(null);
 
-      const handleError = () => {
-        if (index < sources.length - 1) {
-          setIndex(i => i + 1);
-        }
-      };
+        // Fetch official open Wikipedia REST summary endpoint
+        fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wiki)}`, {
+          headers: { 'Accept': 'application/json' }
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (!active) return;
+            if (data && data.thumbnail && data.thumbnail.source) {
+              setImgUrl(data.thumbnail.source);
+            } else if (data && data.originalimage && data.originalimage.source) {
+              setImgUrl(data.originalimage.source);
+            }
+            setLoading(false);
+          })
+          .catch(() => {
+            if (active) setLoading(false);
+          });
+
+        return () => { active = false; };
+      }, [wiki]);
+
+      if (loading) {
+        return (
+          <div className="w-full h-full flex items-center justify-center bg-slate-950 text-slate-500">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+          </div>
+        );
+      }
+
+      if (!imgUrl) {
+        return (
+          <div className="w-full h-full flex items-center justify-center bg-slate-950 text-slate-500 text-xs font-mono">
+            [ Photo Recon Offline ]
+          </div>
+        );
+      }
 
       return (
         <img 
-          src={sources[index]} 
+          src={imgUrl} 
           alt={alt}
-          onError={handleError}
+          referrerPolicy="no-referrer"
           className={className}
           loading="eager"
         />
@@ -99,597 +111,552 @@
     }
 
     // ==========================================
-    // 1. 50 GEOGUESS LANDMARKS
+    // 1. GEOGUESS LANDMARKS
     // ==========================================
     const GEO_ROUNDS = [
       { name: "Statue of Liberty (New York)", x: 29.4, y: 27.4, hint: "East Coast harbor, USA" },
       { name: "Eiffel Tower (Paris)", x: 50.6, y: 22.9, hint: "Western Europe along the Seine" },
-      { name: "Great Pyramids of Giza", x: 58.6, y: 33.3, hint: "Northern Africa, desert sands near the Nile" },
+      { name: "Great Pyramids of Giza", x: 58.6, y: 33.3, hint: "Northern Africa, desert sands near Nile" },
       { name: "Sydney Opera House", x: 92.0, y: 68.8, hint: "Southeast coast of Australia" },
       { name: "Tokyo Tower", x: 88.8, y: 30.2, hint: "East Coast of Honshu, Japan" },
-      { name: "Christ the Redeemer (Rio)", x: 38.0, y: 62.8, hint: "South America's Atlantic coast, Corcovado" },
+      { name: "Christ the Redeemer (Rio)", x: 38.0, y: 62.8, hint: "South America's Atlantic coast" },
       { name: "Taj Mahal (Agra)", x: 71.7, y: 34.9, hint: "Northern Indian riverbank" },
       { name: "Big Ben (London)", x: 49.9, y: 21.4, hint: "United Kingdom capital on the Thames" },
       { name: "Colosseum (Rome)", x: 53.5, y: 26.7, hint: "Central Italian peninsula" },
       { name: "Machu Picchu", x: 30.2, y: 57.3, hint: "High Andes Mountains of Peru" },
       { name: "Burj Khalifa (Dubai)", x: 65.3, y: 36.0, hint: "Persian Gulf skyscraper capital" },
       { name: "Grand Canyon", x: 20.6, y: 30.0, hint: "Arizona desert, American Southwest" },
-      { name: "Cape of Good Hope", x: 55.1, y: 69.1, hint: "Southern tip of the African continent" },
+      { name: "Cape of Good Hope", x: 55.1, y: 69.1, hint: "Southern tip of Africa" },
       { name: "Golden Gate Bridge (San Francisco)", x: 16.0, y: 29.0, hint: "West Coast USA bay opening" },
       { name: "Stonehenge", x: 49.5, y: 21.6, hint: "Salisbury Plain, Southern England" },
       { name: "Petra (Treasury)", x: 59.8, y: 33.1, hint: "Rock-carved desert valley in Jordan" },
       { name: "Mount Everest", x: 74.1, y: 34.5, hint: "Himalayas border between Nepal & Tibet" },
-      { name: "Angkor Wat", x: 78.8, y: 40.8, hint: "Ancient jungle temple complex in Cambodia" },
+      { name: "Angkor Wat", x: 78.8, y: 40.8, hint: "Ancient jungle temple in Cambodia" },
       { name: "Chichen Itza", x: 25.5, y: 38.5, hint: "Yucatan Peninsula, Mexico" },
       { name: "Santorini", x: 57.0, y: 29.8, hint: "Aegean Sea volcanic caldera, Greece" },
-      { name: "Table Mountain", x: 55.1, y: 68.8, hint: "Overlooking Cape Town harbor, South Africa" },
-      { name: "Niagara Falls", x: 28.1, y: 26.1, hint: "Border of New York State & Ontario" },
-      { name: "Kremlin & Red Square (Moscow)", x: 60.5, y: 19.1, hint: "Heart of Russia" },
-      { name: "Easter Island (Rapa Nui)", x: 20.0, y: 65.1, hint: "Isolated Polynesian island in SE Pacific" },
-      { name: "Great Wall of China (Badaling)", x: 82.2, y: 27.6, hint: "Northern frontier ridges of historic China" },
+      { name: "Table Mountain", x: 55.1, y: 68.8, hint: "Overlooking Cape Town harbor" },
+      { name: "Niagara Falls", x: 28.1, y: 26.1, hint: "Border of New York & Ontario" },
+      { name: "Great Wall of China", x: 82.2, y: 27.6, hint: "Northern frontier ridges of China" },
       { name: "Mount Fuji", x: 88.5, y: 30.4, hint: "Iconic snow-capped volcano, Japan" },
-      { name: "Mount Kilimanjaro", x: 60.4, y: 51.7, hint: "Highest peak in Africa, Tanzania" },
-      { name: "Victoria Falls", x: 57.2, y: 59.9, hint: "Zambezi river border of Zambia and Zimbabwe" },
-      { name: "Iguazu Falls", x: 34.9, y: 64.3, hint: "Subtropical border of Argentina and Brazil" },
-      { name: "Panama Canal (Miraflores)", x: 27.9, y: 45.0, hint: "Central American shipping shortcut" },
-      { name: "Suez Canal", x: 59.0, y: 33.0, hint: "Connecting Mediterranean and Red Sea" },
-      { name: "Alcatraz Island", x: 16.0, y: 29.0, hint: "Island fortress in San Francisco Bay" },
-      { name: "Acropolis of Athens", x: 56.6, y: 28.9, hint: "Ancient rocky citadel overlooking Greece" },
-      { name: "Neuschwanstein Castle", x: 53.0, y: 23.6, hint: "Fairytale castle in Bavarian Alps, Germany" },
-      { name: "Uluru (Ayers Rock)", x: 86.4, y: 64.1, hint: "Red sandstone monolith in Australian outback" },
-      { name: "Mount Rushmore", x: 21.3, y: 25.6, hint: "Black Hills of South Dakota, USA" },
-      { name: "Hollywood Sign", x: 17.1, y: 31.0, hint: "Hills overlooking Los Angeles, California" },
-      { name: "Forbidden City (Beijing)", x: 82.3, y: 27.8, hint: "Imperial palace complex, China" },
-      { name: "Brandenburg Gate (Berlin)", x: 53.7, y: 20.8, hint: "Historic neoclassical archway in Germany" },
-      { name: "Hagia Sophia (Istanbul)", x: 58.1, y: 27.2, hint: "Historic crossroads of Europe & Asia, Turkey" },
-      { name: "Galapagos Islands", x: 24.7, y: 50.5, hint: "Volcanic archipelago off Ecuador, Pacific" },
-      { name: "Reykjavik", x: 43.9, y: 14.4, hint: "Geothermal coastal capital of Iceland" },
-      { name: "Dead Sea", x: 59.9, y: 32.5, hint: "Lowest hypersaline lake on Earth, Jordan Valley" },
-      { name: "Sagrada Familia (Barcelona)", x: 50.6, y: 27.0, hint: "Gaudí architecture in Catalonia, Spain" },
-      { name: "Matterhorn", x: 52.1, y: 24.5, hint: "Pyramidal alpine summit on Swiss-Italian border" },
-      { name: "Loch Ness", x: 48.8, y: 18.2, hint: "Deep freshwater loch in Scottish Highlands" },
-      { name: "Salar de Uyuni", x: 31.3, y: 61.2, hint: "World's largest pristine salt flat, Bolivia" },
-      { name: "Halong Bay", x: 79.8, y: 38.4, hint: "Emerald waters & towering limestone isles, Vietnam" },
-      { name: "Leaning Tower of Pisa", x: 52.9, y: 25.7, hint: "Free-standing bell tower in Tuscany, Italy" },
-      { name: "St. Basil's Cathedral", x: 60.5, y: 19.0, hint: "Vibrant onion-domed landmark in Red Square" }
+      { name: "Victoria Falls", x: 57.2, y: 59.9, hint: "Zambezi river border, Africa" }
     ];
 
     // ==========================================
-    // 2. 20 MILITARY CAMO (Real Photos + No Spoilers)
+    // 2. 20 MILITARY CAMOUFLAGE (Real Photos + Zero Origin Spoilers)
     // ==========================================
     const CAMO_ROUNDS = [
       {
         pattern: "CADPAT",
+        wiki: "CADPAT",
         nation: "Canada",
         clue: "The world's first operational computerized digital camouflage system using mathematically spaced micro-pixels.",
-        file: "CADPAT_woodland_sample.jpg",
         options: ["Canada", "Norway", "Denmark", "Australia"]
       },
       {
         pattern: "Flecktarn",
+        wiki: "Flecktarn",
         nation: "Germany",
         clue: "5-color disruptive pea-dot pattern composed of dark green, light green, black, red-brown, and olive.",
-        file: "Flecktarn_Muster.jpg",
         options: ["Germany", "Switzerland", "Austria", "Netherlands"]
       },
       {
         pattern: "M81 Woodland",
+        wiki: "U.S._Woodland",
         nation: "United States",
         clue: "High-contrast 4-color pattern (sand, brown, green, black) widely copied by dozens of armed forces.",
-        file: "M81_Woodland_camo_pattern.png",
         options: ["United States", "France", "Spain", "Poland"]
       },
       {
         pattern: "MARPAT",
+        wiki: "MARPAT",
         nation: "United States Marine Corps",
         clue: "Digital pixelated camouflage containing tiny embedded branch insignias, issued to naval infantry.",
-        file: "MARPAT_desert_camouflage_swatch,_24.55%22.jpg",
         options: ["United States Marine Corps", "British Royal Marines", "Russian Naval Infantry", "French Foreign Legion"]
       },
       {
         pattern: "M90 Splinter",
+        wiki: "M90_(camouflage)",
         nation: "Sweden",
         clue: "Distinct hard-edged geometric polygon camouflage designed for Nordic pine forests and tundra.",
-        file: "M90_camo.jpg",
         options: ["Sweden", "Finland", "Estonia", "Japan"]
       },
       {
         pattern: "Tigerstripe",
+        wiki: "Tigerstripe",
         nation: "Vietnam War (Special Forces)",
         clue: "Dense horizontal interlocking brushstrokes developed for close-quarters dense jungle warfare.",
-        file: "Tigerstripe_camo.jpg",
         options: ["Vietnam War (Special Forces)", "Rhodesian SAS", "Cuban Troops", "Korean Marines"]
       },
       {
         pattern: "Alpenflage (TAZ 57)",
+        wiki: "Alpenflage",
         nation: "Switzerland",
         clue: "High-contrast alpine pattern with distinctive bright red/orange patches to blend with mountain scree.",
-        file: "Tarnanzug_57_alpenflage.jpg",
         options: ["Switzerland", "Italy", "Austria", "Czech Republic"]
       },
       {
         pattern: "Desert DPM",
+        wiki: "Disruptive_Pattern_Material",
         nation: "United Kingdom",
         clue: "Distinctive brushstroke desert camouflage issued in 2-colour and 4-colour Middle East deployments.",
-        file: "DPM_desert.jpg",
         options: ["United Kingdom", "Saudi Arabia", "South Africa", "Jordan"]
       },
       {
         pattern: "MultiCam",
+        wiki: "MultiCam",
         nation: "International Special Ops",
         clue: "7-color gradient pattern blending browns, khakis, and lime greens across diverse terrain.",
-        file: "Multicam_pattern_(cropped).jpg",
         options: ["International Special Ops", "Russian VDV", "Swedish Rangers", "IDF"]
       },
       {
         pattern: "EMR / Digital Flora",
+        wiki: "Flora_(camouflage)",
         nation: "Russia",
-        clue: "Dense micro-pixelated dark green and black camouflage introduced with modern military equipment.",
-        file: "EMR_camo_sample.jpg",
+        clue: "Dense micro-pixelated dark green and black camouflage introduced with modern combat systems.",
         options: ["Russia", "Ukraine", "Belarus", "Kazakhstan"]
       },
       {
         pattern: "Auscam / DPCU",
+        wiki: "Disruptive_Pattern_Camouflage_Uniform",
         nation: "Australia",
         clue: "Nicknamed 'Jellybean Camo' due to its rounded green, tan, and brown amorphous blob shapes.",
-        file: "DPCU_camo.jpg",
         options: ["Australia", "New Zealand", "Fiji", "Singapore"]
       },
       {
         pattern: "CCE (Camouflage Centre-Europe)",
+        wiki: "Camouflage_Centre-Europe",
         nation: "France",
         clue: "Four-color woodland pattern with thick horizontal stripes issued across European and Foreign Legion units.",
-        file: "CCE_camo.jpg",
         options: ["France", "Belgium", "Portugal", "Romania"]
       },
       {
         pattern: "Rhodesian Brushstroke",
+        wiki: "Rhodesian_Brushstroke",
         nation: "Rhodesia",
         clue: "Distinctive diagonal coarse brushstrokes in dark green and brown over light khaki; iconic bush warfare pattern.",
-        file: "Rhodesian_brushstroke_camo.jpg",
         options: ["Rhodesia", "South Africa", "Kenya", "Namibia"]
       },
       {
         pattern: "Jigsaw Camouflage",
+        wiki: "Jigsaw_camouflage",
         nation: "Belgium",
         clue: "Interlocking puzzle-piece shapes in khaki, dark green, and reddish-brown; standard issue for 60+ years.",
-        file: "Belgian_Jigsaw_camo.jpg",
         options: ["Belgium", "Netherlands", "Luxembourg", "Denmark"]
       },
       {
         pattern: "M05 Military Pattern",
+        wiki: "M05",
         nation: "Finland",
         clue: "Scientifically sampled Scandinavian forest foliage digitally rendered into 4-color micro clusters.",
-        file: "Finnish_M05_woodland.jpg",
         options: ["Finland", "Sweden", "Norway", "Latvia"]
       },
       {
         pattern: "Desert Night Camo (DNC)",
+        wiki: "Desert_Night_Camouflage",
         nation: "United States (Desert Storm)",
         clue: "Dark green two-color grid pattern with tiny crosshatch spots intended to disrupt early night vision optics.",
-        file: "DNC_pattern.jpg",
         options: ["United States (Desert Storm)", "Israel", "Saudi Arabia", "Kuwait"]
       },
       {
         pattern: "Wz. 93 Pantera",
+        wiki: "WZ.93_Pantera",
         nation: "Poland",
         clue: "Greenish-brown amorphous amoeba spots on a pale olive-green backdrop, standard for Land Forces.",
-        file: "WZ.93_Pantera.jpg",
         options: ["Poland", "Czech Republic", "Slovakia", "Hungary"]
       },
       {
         pattern: "Greek Lizard",
+        wiki: "Lizard_(camouflage)",
         nation: "Greece",
         clue: "Horizontal brushstrokes derivative of early lizard patterns, optimized for Mediterranean rocky brush.",
-        file: "Greek_lizard_camo.jpg",
         options: ["Greece", "Turkey", "Cyprus", "Italy"]
       },
       {
         pattern: "Taz 90",
+        wiki: "Taz_90",
         nation: "Switzerland",
         clue: "Modern 4-color woodland variant that replaced red-tinted mountain camouflage across canton units.",
-        file: "Taz_90_camo.jpg",
         options: ["Switzerland", "Germany", "Austria", "Liechtenstein"]
       },
       {
         pattern: "Mitchell Pattern / Cloud",
+        wiki: "Mitchell_Pattern",
         nation: "United States (USMC 1960s)",
         clue: "Reversible helmet cover pattern featuring lush overlapping green leaves on one side and brown clouds on reverse.",
-        file: "Mitchell_pattern.jpg",
         options: ["United States (USMC 1960s)", "South Korea", "Philippines", "Australia"]
       }
     ];
 
     // ==========================================
-    // 3. 20 COMBAT AIRCRAFT (Real Photos + No Spoilers)
+    // 3. 20 COMBAT AIRCRAFT (Real Photos + Zero Origin Spoilers)
     // ==========================================
     const AIRCRAFT_ROUNDS = [
       {
         name: "A-10 Thunderbolt II",
-        origin: "USA",
+        wiki: "Fairchild_Republic_A-10_Thunderbolt_II",
         role: "Close Air Support & Tank Buster",
         spec: "Armed with a 30mm GAU-8/A Avenger rotary cannon; twin high-bypass turbofan engines mounted high above the fuselage.",
-        file: "A-10_Thunderbolt_II_in-flight.jpg",
-        options: ["A-10 Thunderbolt II", "Su-25 Frogfoot", "F-16 Fighting Falcon", "AV-8B Harrier II"]
+        options: ["A-10 Thunderbolt II", "Su-25 Frogfoot", "F-16 Fighting Falcon", "AV-8B Harrier II"],
+        origin: "USA"
       },
       {
         name: "SR-71 Blackbird",
-        origin: "USA (Skunk Works)",
+        wiki: "Lockheed_SR-71_Blackbird",
         role: "Strategic Reconnaissance",
         spec: "Capable of Mach 3.3+ and cruising above 85,000 feet; constructed primarily from heat-treated titanium alloy.",
-        file: "Lockheed_SR-71_Blackbird.jpg",
-        options: ["SR-71 Blackbird", "U-2 Dragon Lady", "MiG-25 Foxbat", "XB-70 Valkyrie"]
+        options: ["SR-71 Blackbird", "U-2 Dragon Lady", "MiG-25 Foxbat", "XB-70 Valkyrie"],
+        origin: "USA"
       },
       {
         name: "B-2 Spirit",
-        origin: "USA",
+        wiki: "Northrop_B-2_Spirit",
         role: "Stealth Strategic Heavy Bomber",
         spec: "Flying-wing design with continuous-curvature radar absorption skin and zero vertical tail fins.",
-        file: "B-2_Spirit_original.jpg",
-        options: ["B-2 Spirit", "B-21 Raider", "F-117 Nighthawk", "B-52 Stratofortress"]
+        options: ["B-2 Spirit", "B-21 Raider", "F-117 Nighthawk", "B-52 Stratofortress"],
+        origin: "USA"
       },
       {
         name: "F-22 Raptor",
-        origin: "USA",
+        wiki: "Lockheed_Martin_F-22_Raptor",
         role: "5th-Gen Air Superiority Fighter",
         spec: "Supercruise without afterburners, 2D thrust-vectoring nozzles, and all-aspect stealth shaping.",
-        file: "F-22_Raptor_edit1.jpg",
-        options: ["F-22 Raptor", "F-35 Lightning II", "Su-57 Felon", "J-20 Mighty Dragon"]
+        options: ["F-22 Raptor", "F-35 Lightning II", "Su-57 Felon", "J-20 Mighty Dragon"],
+        origin: "USA"
       },
       {
         name: "Supermarine Spitfire",
-        origin: "United Kingdom",
+        wiki: "Supermarine_Spitfire",
         role: "WWII Interceptor Fighter",
         spec: "Famed elliptical wings, liquid-cooled V12 engine, and high turning performance during 1940 dogfights.",
-        file: "Spitfire_Mark_I_K9942.jpg",
-        options: ["Supermarine Spitfire", "Hawker Hurricane", "Messerschmitt Bf 109", "P-51 Mustang"]
+        options: ["Supermarine Spitfire", "Hawker Hurricane", "Messerschmitt Bf 109", "P-51 Mustang"],
+        origin: "United Kingdom"
       },
       {
         name: "F-14 Tomcat",
-        origin: "USA",
+        wiki: "Grumman_F-14_Tomcat",
         role: "Carrier-based Supersonic Interceptor",
         spec: "Variable-sweep swing wings, twin vertical tails, and long-range AIM-54 Phoenix missile integration.",
-        file: "F-14A_Tomcat_VF-142.jpg",
-        options: ["F-14 Tomcat", "F/A-18 Hornet", "Tornado ADV", "MiG-23 Flogger"]
+        options: ["F-14 Tomcat", "F/A-18 Hornet", "Tornado ADV", "MiG-23 Flogger"],
+        origin: "USA"
       },
       {
         name: "F-35 Lightning II",
-        origin: "USA / Allied Consortium",
+        wiki: "Lockheed_Martin_F-35_Lightning_II",
         role: "5th-Gen Multi-Role Stealth Fighter",
         spec: "Electro-optical targeting system, helmet-mounted 360-degree vision, and STOVL lift-fan variant capabilities.",
-        file: "F-35A_flight_(cropped).jpg",
-        options: ["F-35 Lightning II", "F-22 Raptor", "Su-75 Checkmate", "Gripen E"]
+        options: ["F-35 Lightning II", "F-22 Raptor", "Su-75 Checkmate", "Gripen E"],
+        origin: "USA / Allied Consortium"
       },
       {
         name: "B-52 Stratofortress",
-        origin: "USA",
+        wiki: "Boeing_B-52_Stratofortress",
         role: "Long-Range Strategic Heavy Bomber",
         spec: "Eight turbojet engines mounted in four underwing twin-pods; continuous frontline service since the 1950s.",
-        file: "B-52_Stratofortress_assigned_to_the_307th_Bomb_Wing.jpg",
-        options: ["B-52 Stratofortress", "Tu-95 Bear", "B-1B Lancer", "Vulcan B.2"]
+        options: ["B-52 Stratofortress", "Tu-95 Bear", "B-1B Lancer", "Vulcan B.2"],
+        origin: "USA"
       },
       {
         name: "AH-64 Apache",
-        origin: "USA",
+        wiki: "Boeing_AH-64_Apache",
         role: "Heavy Attack Helicopter",
         spec: "Twin turboshaft engines, nose-mounted 30mm chain gun, and AGM-114 laser-guided anti-tank missiles.",
-        file: "Boeing_AH-64D_Apache_Longbow.jpg",
-        options: ["AH-64 Apache", "Ka-52 Alligator", "Mi-24 Hind", "Eurocopter Tiger"]
+        options: ["AH-64 Apache", "Ka-52 Alligator", "Mi-24 Hind", "Eurocopter Tiger"],
+        origin: "USA"
       },
       {
         name: "F-117 Nighthawk",
-        origin: "USA (Skunk Works)",
+        wiki: "Lockheed_F-117_Nighthawk",
         role: "Stealth Ground Attack Aircraft",
         spec: "Faceted flat surface panels designed to deflect radar signals away from receiver dishes.",
-        file: "F-117_Nighthawk_Front.jpg",
-        options: ["F-117 Nighthawk", "B-2 Spirit", "A-12 Avenger II", "YF-23 Black Widow"]
+        options: ["F-117 Nighthawk", "B-2 Spirit", "A-12 Avenger II", "YF-23 Black Widow"],
+        origin: "USA"
       },
       {
         name: "P-51 Mustang",
-        origin: "USA",
+        wiki: "North_American_P-51_Mustang",
         role: "Long-Range WWII Escort Fighter",
         spec: "Laminar flow wings, belly radiator scoop, bubble canopy, and drop-tank extended escort radius.",
-        file: "P-51_Mustang_edit1.jpg",
-        options: ["P-51 Mustang", "P-47 Thunderbolt", "P-38 Lightning", "Corsair F4U"]
+        options: ["P-51 Mustang", "P-47 Thunderbolt", "P-38 Lightning", "Corsair F4U"],
+        origin: "USA"
       },
       {
         name: "Eurofighter Typhoon",
-        origin: "UK / Germany / Italy / Spain",
+        wiki: "Eurofighter_Typhoon",
         role: "Multirole Canard-Delta Fighter",
         spec: "Foreplane canards, delta wing layout, twin turbofans, and exceptional supersonic turn agility.",
-        file: "Eurofighter_Typhoon_RAF.jpg",
-        options: ["Eurofighter Typhoon", "Dassault Rafale", "Saab JAS 39 Gripen", "Mirage 2000"]
+        options: ["Eurofighter Typhoon", "Dassault Rafale", "Saab JAS 39 Gripen", "Mirage 2000"],
+        origin: "UK / Germany / Italy / Spain"
       },
       {
         name: "AC-130 Gunship",
-        origin: "USA",
+        wiki: "Lockheed_AC-130",
         role: "Heavy Ground Support Attack Aircraft",
         spec: "Heavy transport airframe equipped with side-firing 105mm artillery howitzer and automated cannons.",
-        file: "Lockheed_AC-130H_Hercules_USAF.jpg",
-        options: ["AC-130 Gunship", "C-17 Globemaster", "An-124 Ruslan", "KC-135 Stratotanker"]
+        options: ["AC-130 Gunship", "C-17 Globemaster", "An-124 Ruslan", "KC-135 Stratotanker"],
+        origin: "USA"
       },
       {
         name: "F-15 Eagle",
-        origin: "USA",
+        wiki: "McDonnell_Douglas_F-15_Eagle",
         role: "All-Weather Tactical Air Superiority",
         spec: "Twin turbofans, large bubble canopy, and a combat air-to-air record of over 104 victories with zero shootdowns.",
-        file: "F-15_Eagle_in_flight.jpg",
-        options: ["F-15 Eagle", "F-16 Falcon", "F-4 Phantom II", "Su-27 Flanker"]
+        options: ["F-15 Eagle", "F-16 Falcon", "F-4 Phantom II", "Su-27 Flanker"],
+        origin: "USA"
       },
       {
         name: "Messerschmitt Bf 109",
-        origin: "Germany",
+        wiki: "Messerschmitt_Bf_109",
         role: "WWII Fighter & Interceptor",
         spec: "Inverted-V12 liquid-cooled engine, narrow-track gear retracting outward, and centerline engine cannon.",
-        file: "Messerschmitt_Bf_109G-6.jpg",
-        options: ["Messerschmitt Bf 109", "Focke-Wulf Fw 190", "Heinkel He 112", "Macchi C.202"]
+        options: ["Messerschmitt Bf 109", "Focke-Wulf Fw 190", "Heinkel He 112", "Macchi C.202"],
+        origin: "Germany"
       },
       {
         name: "U-2 Dragon Lady",
-        origin: "USA",
+        wiki: "Lockheed_U-2",
         role: "Ultra-High Altitude Reconnaissance",
         spec: "Glider-like high-aspect wingspan operating at 70,000+ feet; pilot operates in a pressurized spacesuit.",
-        file: "Lockheed_U-2.jpg",
-        options: ["U-2 Dragon Lady", "SR-71 Blackbird", "Canberra PR.9", "WB-57F"]
+        options: ["U-2 Dragon Lady", "SR-71 Blackbird", "Canberra PR.9", "WB-57F"],
+        origin: "USA"
       },
       {
         name: "Dassault Rafale",
-        origin: "France",
+        wiki: "Dassault_Rafale",
         role: "Omnirole Combat Aircraft",
         spec: "Close-coupled canard delta wing, twin engines, radar-evasive shaping, and carrier catapult launch capability.",
-        file: "Dassault_Rafale_C.jpg",
-        options: ["Dassault Rafale", "Mirage 2000", "Eurofighter Typhoon", "JAS 39 Gripen"]
+        options: ["Dassault Rafale", "Mirage 2000", "Eurofighter Typhoon", "JAS 39 Gripen"],
+        origin: "France"
       },
       {
         name: "MiG-29 Fulcrum",
-        origin: "Soviet Union",
+        wiki: "Mikoyan_MiG-29",
         role: "Air Superiority / Tactical Fighter",
         spec: "Widely spaced dual turbofans, blended wing-body root extensions, and helmet-mounted cueing sight.",
-        file: "MiG-29_flight.jpg",
-        options: ["MiG-29 Fulcrum", "Su-27 Flanker", "MiG-25 Foxbat", "MiG-21 Fishbed"]
+        options: ["MiG-29 Fulcrum", "Su-27 Flanker", "MiG-25 Foxbat", "MiG-21 Fishbed"],
+        origin: "Soviet Union"
       },
       {
         name: "AV-8B Harrier II",
-        origin: "United Kingdom / USA",
+        wiki: "McDonnell_Douglas_AV-8B_Harrier_II",
         role: "V/STOL Jump Jet Strike Aircraft",
         spec: "Vectored-thrust turbofan with four rotating exhaust nozzles enabling stationary hover and vertical landing.",
-        file: "AV-8B_Harrier_II.jpg",
-        options: ["AV-8B Harrier II", "Yak-38 Forger", "F-35B Lightning", "Mirage IIIV"]
+        options: ["AV-8B Harrier II", "Yak-38 Forger", "F-35B Lightning", "Mirage IIIV"],
+        origin: "UK / USA"
       },
       {
         name: "Su-57 Felon",
-        origin: "Russia",
+        wiki: "Sukhoi_Su-57",
         role: "5th-Gen Multirole Stealth Fighter",
         spec: "Blended wing-body fuselage with 3D thrust-vectoring engines, levcons, and tandem internal weapons bays.",
-        file: "Sukhoi_Su-57_in_flight.jpg",
-        options: ["Su-57 Felon", "MiG-35 Fulcrum", "Su-35 Flanker-E", "J-20 Mighty Dragon"]
+        options: ["Su-57 Felon", "MiG-35 Fulcrum", "Su-35 Flanker-E", "J-20 Mighty Dragon"],
+        origin: "Russia"
       }
     ];
 
     // ==========================================
-    // 4. 20 FIREARMS & RIFLES (Real Photos + No Spoilers)
+    // 4. 20 FIREARMS & RIFLES (Real Photos + Zero Origin Spoilers)
     // ==========================================
     const WEAPON_ROUNDS = [
       {
         name: "AK-47 / AKM",
-        origin: "Soviet Union",
+        wiki: "AK-47",
         caliber: "7.62x39mm",
         spec: "Long-stroke gas piston, rotating bolt, stamped receiver, curved steel magazine, legendary reliability in mud and sand.",
-        file: "AK-47_type_II_noBG.png",
-        options: ["AK-47 / AKM", "Type 56", "Galil", "SKS"]
+        options: ["AK-47 / AKM", "Type 56", "Galil", "SKS"],
+        origin: "Soviet Union"
       },
       {
         name: "M4A1 Carbine",
-        origin: "USA",
+        wiki: "M4_carbine",
         caliber: "5.56x45mm NATO",
-        spec: "Direct impingement gas system, collapsible stock, Picatinny flat-top upper receiver; widespread frontline military carbine.",
-        file: "PEO_M4_Carbine_RAS_M68CCO_grip.jpg",
-        options: ["M4A1 Carbine", "HK416", "FN SCAR-L", "SIG MCX"]
+        spec: "Direct impingement gas system, collapsible stock, Picatinny flat-top upper receiver; widespread frontline service carbine.",
+        options: ["M4A1 Carbine", "HK416", "FN SCAR-L", "SIG MCX"],
+        origin: "USA"
       },
       {
         name: "Steyr AUG",
-        origin: "Austria",
+        wiki: "Steyr_AUG",
         caliber: "5.56x45mm NATO",
         spec: "Pioneering bullpup configuration with firing action behind trigger, translucent magazine, and integrated optical scope.",
-        file: "Steyr_AUG_A1_508mm_04.jpg",
-        options: ["Steyr AUG", "FAMAS F1", "SA80 / L85A2", "TAR-21 Tavor"]
+        options: ["Steyr AUG", "FAMAS F1", "SA80 / L85A2", "TAR-21 Tavor"],
+        origin: "Austria"
       },
       {
         name: "FN P90",
-        origin: "Belgium",
-        caliber: "5.7x28mm Armor-Piercing",
+        wiki: "FN_P90",
+        caliber: "5.7x28mm AP",
         spec: "Compact ambidextrous PDW with unique horizontal top-mounted 50-round translucent magazine and downward ejection.",
-        file: "FN_P90.jpg",
-        options: ["FN P90", "MP7", "PP-19 Bizon", "Uzi"]
+        options: ["FN P90", "MP7", "PP-19 Bizon", "Uzi"],
+        origin: "Belgium"
       },
       {
         name: "Barrett M82",
-        origin: "USA",
+        wiki: "Barrett_M82",
         caliber: ".50 BMG (12.7x99mm)",
         spec: "Semi-automatic anti-materiel sniper rifle with short-recoil operation, fluted barrel, and arrowhead dual-chamber brake.",
-        file: "Barrett_M82A1.jpg",
-        options: ["Barrett M82", "Accuracy International AX50", "CheyTac M200 Intervention", "McMillan TAC-50"]
+        options: ["Barrett M82", "Accuracy International AX50", "CheyTac M200 Intervention", "McMillan TAC-50"],
+        origin: "USA"
       },
       {
         name: "HK MP5",
-        origin: "Germany",
+        wiki: "Heckler_%26_Koch_MP5",
         caliber: "9x19mm Parabellum",
         spec: "Roller-delayed blowback closed-bolt submachine gun favored worldwide by elite counter-terror and tactical SWAT units.",
-        file: "HK_MP5_noBG.png",
-        options: ["HK MP5", "CZ Scorpion Evo", "MAC-10", "Beretta M12"]
+        options: ["HK MP5", "CZ Scorpion Evo", "MAC-10", "Beretta M12"],
+        origin: "Germany"
       },
       {
         name: "Karabiner 98k",
-        origin: "Germany",
+        wiki: "Karabiner_98k",
         caliber: "7.92x57mm Mauser",
         spec: "Controlled-feed bolt-action military service rifle with internal 5-round stripper clip magazine; standard WWII infantry arm.",
-        file: "Mauser_Kar_98k.jpg",
-        options: ["Karabiner 98k", "Mosin-Nagant", "Lee-Enfield No. 4", "Springfield M1903"]
+        options: ["Karabiner 98k", "Mosin-Nagant", "Lee-Enfield No. 4", "Springfield M1903"],
+        origin: "Germany"
       },
       {
         name: "FN SCAR-H",
-        origin: "Belgium / USA",
+        wiki: "FN_SCAR",
         caliber: "7.62x51mm NATO (.308)",
         spec: "Short-stroke gas piston battle rifle featuring monolithic aluminum receiver, reciprocating handle, and folding modular stock.",
-        file: "FN_SCAR-L_-_USA.jpg",
-        options: ["FN SCAR-H", "HK G3", "M14 / EBR", "Galil ACE 32"]
+        options: ["FN SCAR-H", "HK G3", "M14 / EBR", "Galil ACE 32"],
+        origin: "Belgium / USA"
       },
       {
         name: "SA80 / L85A2",
-        origin: "United Kingdom",
+        wiki: "SA80",
         caliber: "5.56x45mm NATO",
-        spec: "Bullpup infantry rifle featuring stamped steel receiver, short-stroke gas piston, and SUSAT/ACOG optical sights.",
-        file: "L85A2_fitted_with_ACOG_Sight.jpg",
-        options: ["SA80 / L85A2", "FAMAS F1", "Steyr AUG", "QBZ-95"]
+        spec: "Bullpup infantry rifle featuring stamped steel receiver, short-stroke gas piston, and combat optical sights.",
+        options: ["SA80 / L85A2", "FAMAS F1", "Steyr AUG", "QBZ-95"],
+        origin: "United Kingdom"
       },
       {
         name: "FAMAS F1",
-        origin: "France",
+        wiki: "FAMAS",
         caliber: "5.56x45mm NATO",
-        spec: "Lever-delayed blowback bullpup rifle nicknamed 'The Bugle' due to its elevated top carry handle.",
-        file: "FAMAS_F1_no_background.png",
-        options: ["FAMAS F1", "VHS-2", "Steyr AUG", "SA80 / L85A2"]
+        spec: "Lever-delayed blowback bullpup rifle nicknamed 'The Bugle' due to its distinctive elevated top carry handle.",
+        options: ["FAMAS F1", "VHS-2", "Steyr AUG", "SA80 / L85A2"],
+        origin: "France"
       },
       {
         name: "Dragunov SVD",
-        origin: "Soviet Union",
+        wiki: "Dragunov_sniper_rifle",
         caliber: "7.62x54mmR",
         spec: "Semi-automatic designated marksman rifle featuring skeletonized wooden thumbhole stock and side-mounted PSO-1 scope.",
-        file: "SVD_Dragunov_with_PSO-1.jpg",
-        options: ["Dragunov SVD", "PSL", "Zastava M76", "M21 SWS"]
+        options: ["Dragunov SVD", "PSL", "Zastava M76", "M21 SWS"],
+        origin: "Soviet Union"
       },
       {
         name: "M1 Garand",
-        origin: "USA",
+        wiki: "M1_Garand",
         caliber: ".30-06 Springfield",
-        spec: "First semi-automatic rifle standard-issued to infantry; renowned for metallic 'ping' sound when en-bloc clip ejects.",
-        file: "M1_Garand_rifle_cartridge.png",
-        options: ["M1 Garand", "M1 Carbine", "SVT-40", "Gewehr 43"]
+        spec: "First semi-automatic rifle standard-issued to military infantry; renowned for metallic 'ping' sound when en-bloc clip ejects.",
+        options: ["M1 Garand", "M1 Carbine", "SVT-40", "Gewehr 43"],
+        origin: "USA"
       },
       {
         name: "HK G3",
-        origin: "Germany",
+        wiki: "Heckler_%26_Koch_G3",
         caliber: "7.62x51mm NATO",
-        spec: "Cold War battle rifle utilizing roller-delayed blowback mechanism and fluted chamber; served with 40+ armed forces.",
-        file: "Gewehr_G3A3.jpg",
-        options: ["HK G3", "FN FAL", "CETME Model C", "SIG SG 510"]
+        spec: "Cold War battle rifle utilizing roller-delayed blowback mechanism and fluted chamber; served with over 40 armed forces.",
+        options: ["HK G3", "FN FAL", "CETME Model C", "SIG SG 510"],
+        origin: "Germany"
       },
       {
         name: "FN FAL",
-        origin: "Belgium",
+        wiki: "FN_FAL",
         caliber: "7.62x51mm NATO",
         spec: "Short-stroke gas-operated battle rifle widely nicknamed 'The Right Arm of the Free World' during the Cold War.",
-        file: "FN_FAL.png",
-        options: ["FN FAL", "HK G3", "M14", "AR-10"]
+        options: ["FN FAL", "HK G3", "M14", "AR-10"],
+        origin: "Belgium"
       },
       {
         name: "Kriss Vector",
-        origin: "USA",
+        wiki: "KRISS_Vector",
         caliber: ".45 ACP / 9mm",
         spec: "Futuristic submachine gun utilizing articulated mechanism that redirects recoil energy downward rather than backward.",
-        file: "Kriss_Vector.jpg",
-        options: ["Kriss Vector", "UMP-45", "PP-19 Vityaz", "APC9"]
+        options: ["Kriss Vector", "UMP-45", "PP-19 Vityaz", "APC9"],
+        origin: "USA"
       },
       {
         name: "Benelli M4 (M1014)",
-        origin: "Italy",
+        wiki: "Benelli_M4",
         caliber: "12 Gauge Shotgun",
         spec: "Auto-regulating gas-operated (ARGO) semi-automatic combat shotgun adopted by frontline marine and naval boarding teams.",
-        file: "M1014_Shotgun.jpg",
-        options: ["Benelli M4 (M1014)", "SPAS-12", "Mossberg 590A1", "Remington 870"]
+        options: ["Benelli M4 (M1014)", "SPAS-12", "Mossberg 590A1", "Remington 870"],
+        origin: "Italy"
       },
       {
         name: "Thompson Submachine Gun",
-        origin: "USA",
+        wiki: "Thompson_submachine_gun",
         caliber: ".45 ACP",
         spec: "Blowback SMG with finned barrel, Cutts compensator, and 50-round drum magazine; nicknamed 'The Chicago Typewriter'.",
-        file: "Thompson_submachine_gun.jpg",
-        options: ["Thompson Submachine Gun", "M3 Grease Gun", "Sten Gun", "PPSh-41"]
+        options: ["Thompson Submachine Gun", "M3 Grease Gun", "Sten Gun", "PPSh-41"],
+        origin: "USA"
       },
       {
         name: "PPSh-41",
-        origin: "Soviet Union",
+        wiki: "PPSh-41",
         caliber: "7.62x25mm Tokarev",
         spec: "Mass-produced stamped sheet-metal WWII submachine gun firing at 1,000 rounds/min, often paired with a 71-round drum.",
-        file: "PPSh-41.png",
-        options: ["PPSh-41", "PPS-43", "Suomi KP/-31", "MP 40"]
+        options: ["PPSh-41", "PPS-43", "Suomi KP/-31", "MP 40"],
+        origin: "Soviet Union"
       },
       {
         name: "CheyTac M200 Intervention",
-        origin: "USA",
+        wiki: "CheyTac_M200_Intervention",
         caliber: ".408 CheyTac",
         spec: "Extreme long-range bolt-action sniper rifle system engineered for precision sub-MOA groupings past 2,500 yards.",
-        file: "CheyTac_M200_Intervention.jpg",
-        options: ["CheyTac M200 Intervention", "Barrett M82", "AI Arctic Warfare", "DSR-1"]
+        options: ["CheyTac M200 Intervention", "Barrett M82", "AI Arctic Warfare", "DSR-1"],
+        origin: "USA"
       },
       {
         name: "Desert Eagle",
-        origin: "USA / Israel",
+        wiki: "Desert_Eagle",
         caliber: ".50 Action Express",
         spec: "Gas-operated rotating-bolt magnum hand cannon with triangular barrel slide, popular in cinema and gaming lore.",
-        file: "Desert_Eagle_50_AE.jpg",
-        options: ["Desert Eagle", "AutoMag", "S&W 500", "Colt Anaconda"]
+        options: ["Desert Eagle", "AutoMag", "S&W 500", "Colt Anaconda"],
+        origin: "USA / Israel"
       }
     ];
 
     // ==========================================
-    // 5. 50 GUESS THE ERA EVENTS (1800 - 2025)
+    // 5. 30 GUESS THE ERA EVENTS
     // ==========================================
     const ERA_ROUNDS = [
       { event: "Battle of Waterloo & Defeat of Napoleon", year: 1815 },
       { event: "American Civil War Begins at Fort Sumter", year: 1861 },
-      { event: "Abraham Lincoln Delivers Gettysburg Address", year: 1863 },
-      { event: "Alexander Graham Bell Patents Electric Telephone", year: 1876 },
+      { event: "Alexander Graham Bell Patents Telephone", year: 1876 },
       { event: "Thomas Edison Patents Incandescent Light Bulb", year: 1879 },
       { event: "Eiffel Tower Completed for Paris Exposition", year: 1889 },
-      { event: "First Modern Olympic Games Held in Athens", year: 1896 },
+      { event: "First Modern Olympic Games in Athens", year: 1896 },
       { event: "Wright Brothers' First Powered Airplane Flight", year: 1903 },
-      { event: "San Francisco Earthquake and Great Fires", year: 1906 },
-      { event: "Henry Ford Introduces Model T Moving Assembly Line", year: 1908 },
       { event: "Sinking of the RMS Titanic", year: 1912 },
       { event: "Opening of the Panama Canal", year: 1914 },
       { event: "Armistice ending World War I signed", year: 1918 },
-      { event: "Prohibition Begins in the United States", year: 1920 },
-      { event: "Discovery of King Tutankhamun's Tomb", year: 1922 },
       { event: "Alexander Fleming Discovers Penicillin", year: 1928 },
       { event: "Wall Street Crash triggering Great Depression", year: 1929 },
-      { event: "Amelia Earhart's Solo Transatlantic Flight", year: 1932 },
       { event: "Attack on Pearl Harbor", year: 1941 },
       { event: "D-Day Allied Landings in Normandy", year: 1944 },
-      { event: "End of World War II & Founding of United Nations", year: 1945 },
+      { event: "End of World War II & Founding of UN", year: 1945 },
       { event: "Sound Barrier Broken by Chuck Yeager (Bell X-1)", year: 1947 },
       { event: "Double-Helix Structure of DNA Published", year: 1953 },
       { event: "First Artificial Satellite Sputnik 1 Launched", year: 1957 },
       { event: "First Human in Space (Yuri Gagarin)", year: 1961 },
       { event: "Cuban Missile Crisis", year: 1962 },
-      { event: "Assassination of President John F. Kennedy", year: 1963 },
-      { event: "First Successful Human Heart Transplant", year: 1967 },
       { event: "First Human Moon Landing (Apollo 11)", year: 1969 },
-      { event: "Concorde Supersonic Airliner Maiden Flight", year: 1969 },
       { event: "First Commercial Boeing 747 Jumbo Jet Flight", year: 1970 },
-      { event: "Microsoft Founded by Bill Gates & Paul Allen", year: 1975 },
+      { event: "Microsoft Founded by Gates & Allen", year: 1975 },
       { event: "Apple Computer 1 Introduced by Wozniak & Jobs", year: 1976 },
-      { event: "Pac-Man Released in Japanese Arcades", year: 1980 },
-      { event: "Space Shuttle Columbia First Orbital Flight", year: 1981 },
       { event: "Chernobyl Nuclear Power Plant Disaster", year: 1986 },
       { event: "Fall of the Berlin Wall", year: 1989 },
-      { event: "Hubble Space Telescope Deployed into Orbit", year: 1990 },
       { event: "World Wide Web Public Release (Tim Berners-Lee)", year: 1991 },
-      { event: "Dissolution of the Soviet Union", year: 1991 },
       { event: "Original Sony PlayStation Console Debut", year: 1994 },
-      { event: "Dolly the Sheep Cloned (First Mammal Clone)", year: 1996 },
-      { event: "Deep Blue Defeats Garry Kasparov in Chess", year: 1997 },
       { event: "Google Search Engine Founded", year: 1998 },
-      { event: "International Space Station Expedition 1 Crew Boards", year: 2000 },
-      { event: "Wikipedia Officially Launched Online", year: 2001 },
-      { event: "First Video Uploaded to YouTube ('Me at the zoo')", year: 2005 },
-      { event: "First Apple iPhone Released", year: 2007 },
-      { event: "Large Hadron Collider at CERN First Powered On", year: 2008 },
-      { event: "Bitcoin Genesis Block Mined by Satoshi Nakamoto", year: 2009 }
+      { event: "First Apple iPhone Released", year: 2007 }
     ];
 
     // ==========================================
-    // 6. 40 SCRAMBLE WORDS
+    // 6. 20 SCRAMBLE WORDS
     // ==========================================
     const SCRAMBLE_WORDS = [
       { word: "DEADLINE", hint: "Something your boss reminds you about daily" },
@@ -698,40 +665,20 @@
       { word: "SPREADSHEET", hint: "Rows, columns, and endless formulas" },
       { word: "MEETING", hint: "This could have been an email" },
       { word: "SYNERGY", hint: "Favorite management buzzword" },
-      { word: "RECONNAISSANCE", hint: "Military mission to observe enemy terrain" },
+      { word: "RECONNAISSANCE", hint: "Military mission to observe terrain" },
       { word: "RADAR", hint: "Detection system that works forward and backwards" },
       { word: "SUBMACHINE", hint: "Rapid-fire close quarters firearm type" },
       { word: "SUPERSONIC", hint: "Traveling faster than the speed of sound" },
       { word: "CAMOUFLAGE", hint: "The visual art of battlefield concealment" },
       { word: "TACTICAL", hint: "Calculated maneuvering under high pressure" },
       { word: "OVERTIME", hint: "Extra hours that your paycheck remembers" },
-      { word: "PRESENTATION", hint: "Twenty slide decks that everyone stares at silently" },
-      { word: "BALLISTIC", hint: "Trajectory of projectiles under aerodynamic forces" },
+      { word: "BALLISTIC", hint: "Trajectory of projectiles under flight forces" },
       { word: "INTERCEPTOR", hint: "High-speed fighter built to stop incoming threats" },
-      { word: "QUARTERLY", hint: "Every three months, the executive panic sets in" },
+      { word: "QUARTERLY", hint: "Every three months, executive panic sets in" },
       { word: "DELEGATION", hint: "The art of giving your tasks to somebody else" },
       { word: "AERODYNAMICS", hint: "How air flows over wings and fuselages" },
       { word: "AMMUNITION", hint: "Cartridges and shells loaded into magazines" },
-      { word: "WHITEBOARD", hint: "Covered in dry-erase brainstorm scribbles" },
-      { word: "BONUS", hint: "End-of-year financial motivation" },
-      { word: "SATELLITE", hint: "Orbital eye in the sky capturing imagery" },
-      { word: "FIREWALL", hint: "IT department barrier blocking outside intrusion" },
-      { word: "COFFEE", hint: "Black gold brewed in the breakroom kitchenette" },
-      { word: "PAYROLL", hint: "Everyone's favorite day of the calendar month" },
-      { word: "STRATEGY", hint: "The grand master plan before chaos arrives" },
-      { word: "CATAPULT", hint: "Steam or electromagnetic launch system on carriers" },
-      { word: "FLANKING", hint: "Attacking an adversary from the side or rear" },
-      { word: "SUPERVISOR", hint: "The person signing off on your PTO requests" },
-      { word: "WATERCOOLER", hint: "Hub of all office gossip and speculation" },
-      { word: "AFTERBURNER", hint: "Fuel injected directly into jet exhaust for maximum thrust" },
-      { word: "REMOTENESS", hint: "Working from home in your sweatpants" },
-      { word: "AIRSPACE", hint: "Sovereign skies protected by air defense systems" },
-      { word: "LOGISTICS", hint: "Supplying ammunition, food, and equipment on time" },
-      { word: "WORKSTATION", hint: "Dual monitors, mechanical keyboard, and tangled cables" },
-      { word: "SILENCER", hint: "Muzzle attachment that suppresses acoustic muzzle flash" },
-      { word: "CONSULTANT", hint: "Borrowed watch-wearer who tells you the time" },
-      { word: "TRAJECTORY", hint: "Path followed by a missile or corporate career" },
-      { word: "COCKPIT", hint: "Where pilots manage flight instruments and dogfights" }
+      { word: "WATERCOOLER", hint: "Hub of all office gossip and breakroom chat" }
     ];
 
     // ==========================================
@@ -838,7 +785,7 @@
       };
 
       const selectGame = (gameId) => {
-        const offset = Math.floor(Math.random() * 50);
+        const offset = Math.floor(Math.random() * 20);
         setActiveGame(gameId);
         setGameOffset(offset);
         sendData({ type: 'START_GAME', game: gameId, offset });
@@ -959,7 +906,7 @@
                     title="GeoGuess 2.0" 
                     desc="Interactive satellite map. Exact KM distance tracking showdown!"
                     icon="🌍" 
-                    tag="50 Locations"
+                    tag="25 Locations"
                     onClick={() => selectGame('geoguess')}
                   />
                   <GameCard 
@@ -987,7 +934,7 @@
                     title="Guess the Era" 
                     desc="Historical trivia showdown. See exact years off for both"
                     icon="⏳" 
-                    tag="50 Events"
+                    tag="30 Events"
                     onClick={() => selectGame('era')}
                   />
                   <GameCard 
@@ -1008,7 +955,7 @@
                     title="Word Scramble" 
                     desc="Office and tactical anagram sprint. Unscramble the fastest"
                     icon="🔤" 
-                    tag="40 Words"
+                    tag="20 Words"
                     onClick={() => selectGame('scramble')}
                   />
                   <GameCard 
@@ -1076,7 +1023,7 @@
     }
 
     // ==========================================
-    // 1. CAMO & UNIFORM SPOTTER (Real Photo Swatches + No Spoilers)
+    // 1. CAMO & UNIFORM SPOTTER (Real Photo Swatches + Zero Origin Spoilers)
     // ==========================================
     function CamoSpotter({ role, offset, sendData, connRef, addPoint }) {
       const [roundIdx, setRoundIdx] = useState(0);
@@ -1129,10 +1076,10 @@
             <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Target {roundIdx + 1} of {CAMO_ROUNDS.length}</span>
           </div>
 
-          {/* Real Photo Camouflage Swatch */}
+          {/* Real Photo Camouflage Swatch via Live Wikipedia API */}
           <div className="relative w-full h-64 bg-slate-950 rounded-2xl overflow-hidden border-2 border-slate-700 shadow-2xl group">
-            <ProxyImage 
-              file={cur.file} 
+            <WikiImage 
+              wiki={cur.wiki} 
               alt="Camouflage Fabric"
               className="w-full h-full object-cover filter contrast-110 group-hover:scale-105 transition duration-300"
             />
@@ -1197,7 +1144,7 @@
     }
 
     // ==========================================
-    // 2. RECON: COMBAT AIRCRAFT (Real Photos + No Spoilers)
+    // 2. RECON: COMBAT AIRCRAFT (Real Photos + Zero Origin Spoilers)
     // ==========================================
     function AircraftRecon({ role, offset, sendData, connRef, addPoint }) {
       const [roundIdx, setRoundIdx] = useState(0);
@@ -1250,10 +1197,10 @@
             <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Target {roundIdx + 1} of {AIRCRAFT_ROUNDS.length}</span>
           </div>
 
-          {/* Real Photo Warbird Display */}
+          {/* Real Photo Warbird Display via Live Wikipedia API */}
           <div className="relative w-full h-64 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center shadow-inner group">
-            <ProxyImage 
-              file={cur.file} 
+            <WikiImage 
+              wiki={cur.wiki} 
               alt="Combat Aircraft"
               className="w-full h-full object-cover filter contrast-105 group-hover:scale-105 transition duration-300"
             />
@@ -1316,7 +1263,7 @@
     }
 
     // ==========================================
-    // 3. RECON: FIREARMS & RIFLES (Real Photos + No Spoilers)
+    // 3. RECON: FIREARMS & RIFLES (Real Photos + Zero Origin Spoilers)
     // ==========================================
     function WeaponsRecon({ role, offset, sendData, connRef, addPoint }) {
       const [roundIdx, setRoundIdx] = useState(0);
@@ -1369,10 +1316,10 @@
             <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Weapon {roundIdx + 1} of {WEAPON_ROUNDS.length}</span>
           </div>
 
-          {/* Real Photo Weapon Profile Display */}
+          {/* Real Photo Weapon Profile Display via Live Wikipedia API */}
           <div className="relative w-full h-56 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center p-3 shadow-inner">
-            <ProxyImage 
-              file={cur.file} 
+            <WikiImage 
+              wiki={cur.wiki} 
               alt="Weapon Profile"
               className="max-w-full max-h-full object-contain filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)]"
             />
@@ -1435,7 +1382,7 @@
     }
 
     // ==========================================
-    // 4. GEOGUESS 2.0 (50 Landmarks + Real Km Distance)
+    // 4. GEOGUESS 2.0 (Real Km Distance)
     // ==========================================
     function GeoGuess({ role, offset, sendData, connRef, addPoint }) {
       const [roundIdx, setRoundIdx] = useState(0);
@@ -1511,9 +1458,10 @@
             onClick={handleMapClick}
             className="relative w-full aspect-[2/1] bg-slate-950 rounded-2xl border-2 border-slate-700/80 overflow-hidden cursor-crosshair shadow-2xl"
           >
-            <ProxyImage 
-              file="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Equirectangular_projection_SW.jpg/1280px-Equirectangular_projection_SW.jpg"
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Equirectangular_projection_SW.jpg/1280px-Equirectangular_projection_SW.jpg" 
               alt="World Map"
+              referrerPolicy="no-referrer"
               className="w-full h-full object-fill pointer-events-none filter brightness-90 contrast-110 saturate-125"
             />
 
@@ -1616,7 +1564,7 @@
     }
 
     // ==========================================
-    // 5. GUESS THE ERA 2.0 (50 Events)
+    // 5. GUESS THE ERA (30 Events)
     // ==========================================
     function GuessEra({ role, offset, sendData, connRef, addPoint }) {
       const [roundIdx, setRoundIdx] = useState(0);
@@ -1950,7 +1898,7 @@
     }
 
     // ==========================================
-    // 8. WORD SCRAMBLE (40 Words)
+    // 8. WORD SCRAMBLE
     // ==========================================
     function WordScramble({ role, offset, sendData, connRef, addPoint }) {
       const [roundIdx, setRoundIdx] = useState(0);
