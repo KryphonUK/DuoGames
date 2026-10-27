@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DuoGames - 1v1 Office Showdown</title>
+  <title>DuoGames - 1v1 Office & Recon Showdown</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- React 18 & Babel Standalone (No Node.js or build steps required) -->
+  <!-- React 18 & Babel Standalone -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <!-- PeerJS for Free Real-Time Multiplayer across computers -->
+  <!-- PeerJS for Free Real-Time Multiplayer -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white">
@@ -19,7 +19,7 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
-    // --- SOUND EFFECTS (Synthesized via Web Audio API, no external audio files needed) ---
+    // --- SOUND EFFECTS (Web Audio API Synthesizer) ---
     const playTone = (freq = 440, type = 'sine', duration = 0.1) => {
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -27,7 +27,7 @@
         const gain = audioCtx.createGain();
         osc.type = type;
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
@@ -36,36 +36,279 @@
       } catch (e) {}
     };
 
-    // --- GAME DATA ---
+    // --- HAVERSINE GREAT-CIRCLE DISTANCE CALCULATOR (KM) ---
+    function getDistanceKm(x1, y1, x2, y2) {
+      const toRad = (d) => (d * Math.PI) / 180;
+      // Map percentages to Equirectangular coordinates:
+      const lon1 = (x1 / 100) * 360 - 180;
+      const lat1 = 90 - (y1 / 100) * 180;
+      const lon2 = (x2 / 100) * 360 - 180;
+      const lat2 = 90 - (y2 / 100) * 180;
+      const R = 6371; // Earth's mean radius in km
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return Math.round(R * c);
+    }
+
+    // --- MASSIVE DATASETS ---
+
+    // 1. 25+ GeoGuess Landmarks with Mathematically Calibrated Coordinates
     const GEO_ROUNDS = [
-      { name: "Eiffel Tower (Paris)", x: 49.5, y: 31.0, hint: "Heart of Western Europe" },
-      { name: "Statue of Liberty (New York)", x: 28.5, y: 36.5, hint: "East Coast, USA" },
-      { name: "Great Pyramids of Giza", x: 58.0, y: 41.5, hint: "Northern Africa" },
-      { name: "Sydney Opera House", x: 88.5, y: 77.0, hint: "Southeast Australia" },
-      { name: "Tokyo Tower", x: 85.5, y: 38.0, hint: "Island Nation in East Asia" },
-      { name: "Christ the Redeemer (Rio)", x: 36.5, y: 71.0, hint: "South America's Atlantic Coast" }
+      { name: "Statue of Liberty (New York)", x: 29.4, y: 27.4, hint: "East Coast harbor, USA" },
+      { name: "Eiffel Tower (Paris)", x: 50.6, y: 22.9, hint: "Heart of Western Europe along the Seine" },
+      { name: "Great Pyramids of Giza", x: 58.6, y: 33.3, hint: "Northern Africa, desert sands near the Nile" },
+      { name: "Sydney Opera House", x: 92.0, y: 68.8, hint: "Southeast coast of Australia" },
+      { name: "Tokyo Tower", x: 88.8, y: 30.2, hint: "East Coast of Honshu, Japan" },
+      { name: "Christ the Redeemer (Rio)", x: 38.0, y: 62.8, hint: "South America's Atlantic coast, Corcovado mountain" },
+      { name: "Taj Mahal (Agra)", x: 71.7, y: 34.9, hint: "Northern Indian riverbank" },
+      { name: "Big Ben (London)", x: 49.9, y: 21.4, hint: "United Kingdom capital on the Thames" },
+      { name: "Colosseum (Rome)", x: 53.5, y: 26.7, hint: "Central Italian peninsula" },
+      { name: "Machu Picchu", x: 30.2, y: 57.3, hint: "Andes Mountains of Peru" },
+      { name: "Burj Khalifa (Dubai)", x: 65.3, y: 36.0, hint: "Persian Gulf skyscraper capital" },
+      { name: "Grand Canyon", x: 20.6, y: 30.0, hint: "Arizona desert, American Southwest" },
+      { name: "Cape of Good Hope", x: 55.1, y: 69.1, hint: "Southern tip of the African continent" },
+      { name: "Golden Gate Bridge (San Francisco)", x: 16.0, y: 29.0, hint: "West Coast USA bay opening" },
+      { name: "Stonehenge", x: 49.5, y: 21.6, hint: "Salisbury Plain, Southern England" },
+      { name: "Petra (Treasury)", x: 59.8, y: 33.1, hint: "Rock-carved desert valley in Jordan" },
+      { name: "Mount Everest", x: 74.1, y: 34.5, hint: "Himalayas border between Nepal & Tibet" },
+      { name: "Angkor Wat", x: 78.8, y: 40.8, hint: "Ancient jungle temple complex in Cambodia" },
+      { name: "Chichen Itza", x: 25.5, y: 38.5, hint: "Yucatan Peninsula, Mexico" },
+      { name: "Santorini", x: 57.0, y: 29.8, hint: "Aegean Sea volcanic caldera, Greece" },
+      { name: "Table Mountain", x: 55.1, y: 68.8, hint: "Overlooking Cape Town harbor" },
+      { name: "Niagara Falls", x: 28.1, y: 26.1, hint: "Border between New York State & Ontario, Canada" },
+      { name: "Kremlin & Red Square (Moscow)", x: 60.5, y: 19.1, hint: "Heart of Russia" },
+      { name: "Easter Island (Rapa Nui)", x: 20.0, y: 65.1, hint: "Isolated Polynesian island in Southeastern Pacific" }
     ];
 
+    // 2. 25+ Guess the Era Events
     const ERA_ROUNDS = [
       { event: "First Human Moon Landing (Apollo 11)", year: 1969 },
       { event: "Fall of the Berlin Wall", year: 1989 },
       { event: "Sinking of the RMS Titanic", year: 1912 },
       { event: "First Apple iPhone Released", year: 2007 },
       { event: "Discovery of Penicillin by Alexander Fleming", year: 1928 },
-      { event: "World Wide Web Public Release", year: 1991 },
-      { event: "Wright Brothers' First Powered Flight", year: 1903 }
+      { event: "World Wide Web Public Release (Tim Berners-Lee)", year: 1991 },
+      { event: "Wright Brothers' First Powered Airplane Flight", year: 1903 },
+      { event: "End of World War II & Founding of United Nations", year: 1945 },
+      { event: "Chernobyl Nuclear Power Plant Disaster", year: 1986 },
+      { event: "First Human in Space (Yuri Gagarin)", year: 1961 },
+      { event: "Armistice ending World War I signed", year: 1918 },
+      { event: "Original Sony PlayStation Home Console Released", year: 1994 },
+      { event: "First Commercial Boeing 747 Jumbo Jet Flight", year: 1970 },
+      { event: "Discovery of King Tutankhamun's Tomb", year: 1922 },
+      { event: "Launch of Google Web Search", year: 1998 },
+      { event: "First Flight of the Supersonic Concorde", year: 1969 },
+      { event: "Wall Street Crash triggering the Great Depression", year: 1929 },
+      { event: "First Modern Olympic Games Held in Athens", year: 1896 },
+      { event: "First Successful Human Heart Transplant", year: 1967 },
+      { event: "Pac-Man Arcade Game Debut", year: 1980 },
+      { event: "Double-Helix Structure of DNA Published", year: 1953 },
+      { event: "Hubble Space Telescope Deployed into Orbit", year: 1990 },
+      { event: "Opening of the Panama Canal", year: 1914 },
+      { event: "First Video Uploaded to YouTube ('Me at the zoo')", year: 2005 }
     ];
 
+    // 3. Recon: Combat Warbirds & Aircraft
+    const AIRCRAFT_ROUNDS = [
+      {
+        name: "A-10 Thunderbolt II 'Warthog'",
+        origin: "USA",
+        role: "Close Air Support & Tank Buster",
+        spec: "Armed with 30mm GAU-8/A Avenger rotary cannon firing depleted uranium rounds; straight high-lift wings.",
+        icon: "✈️",
+        options: ["A-10 Thunderbolt II", "Su-25 Frogfoot", "F-16 Fighting Falcon", "AV-8B Harrier II"]
+      },
+      {
+        name: "SR-71 Blackbird",
+        origin: "USA (Skunk Works)",
+        role: "Long-Range Strategic Reconnaissance",
+        spec: "Capable of Mach 3.3+ and flying above 85,000 feet; constructed primarily from titanium.",
+        icon: "🦅",
+        options: ["SR-71 Blackbird", "U-2 Dragon Lady", "MiG-25 Foxbat", "XB-70 Valkyrie"]
+      },
+      {
+        name: "B-2 Spirit",
+        origin: "USA",
+        role: "Stealth Strategic Heavy Bomber",
+        spec: "Iconic flying-wing design with continuous-curvature radar absorption skin and no vertical tail surfaces.",
+        icon: "🦇",
+        options: ["B-2 Spirit", "B-21 Raider", "F-117 Nighthawk", "B-52 Stratofortress"]
+      },
+      {
+        name: "F-22 Raptor",
+        origin: "USA",
+        role: "5th-Generation Air Superiority Fighter",
+        spec: "Supercruise without afterburners, 2D thrust vectoring nozzles, all-aspect stealth.",
+        icon: "🛩️",
+        options: ["F-22 Raptor", "F-35 Lightning II", "Su-57 Felon", "J-20 Mighty Dragon"]
+      },
+      {
+        name: "Supermarine Spitfire",
+        origin: "United Kingdom",
+        role: "WWII Interceptor Fighter",
+        spec: "Famed elliptical wings, Rolls-Royce Merlin V12 liquid-cooled engine, hero of the Battle of Britain.",
+        icon: "🎖️",
+        options: ["Supermarine Spitfire", "Hawker Hurricane", "Messerschmitt Bf 109", "P-51 Mustang"]
+      },
+      {
+        name: "F-14 Tomcat",
+        origin: "USA",
+        role: "Carrier-based Supersonic Interceptor",
+        spec: "Variable-sweep 'swing wings', twin vertical tails, long-range AIM-54 Phoenix missile carrier.",
+        icon: "🚀",
+        options: ["F-14 Tomcat", "F/A-18 Hornet", "Tornado ADV", "MiG-23 Flogger"]
+      },
+      {
+        name: "AC-130 Gunship 'Spooky'",
+        origin: "USA",
+        role: "Heavy Ground Support Attack Aircraft",
+        spec: "Heavy fixed-wing aircraft armed with side-firing 105mm M102 howitzer and 40mm cannons.",
+        icon: "💥",
+        options: ["AC-130 Gunship", "C-17 Globemaster", "An-124 Ruslan", "KC-135 Stratotanker"]
+      },
+      {
+        name: "Eurofighter Typhoon",
+        origin: "United Kingdom / Germany / Italy / Spain",
+        role: "Multirole Canard-Delta Fighter",
+        spec: "Foreplane canards, delta wing, twin Eurojet EJ200 engines, high-agility dogfighter.",
+        icon: "⚡",
+        options: ["Eurofighter Typhoon", "Dassault Rafale", "Saab JAS 39 Gripen", "Mirage 2000"]
+      }
+    ];
+
+    // 4. Recon: Military Small Arms & Rifles
+    const WEAPON_ROUNDS = [
+      {
+        name: "AK-47 / AKM",
+        origin: "Soviet Union",
+        caliber: "7.62x39mm",
+        spec: "Long-stroke gas piston, rotating bolt, stamped receiver, banana magazine, legendary reliability in mud and sand.",
+        options: ["AK-47 / AKM", "Type 56", "Galil", "SKS"]
+      },
+      {
+        name: "M4A1 Carbine",
+        origin: "USA",
+        caliber: "5.56x45mm NATO",
+        spec: "Direct impingement gas system, collapsible stock, Picatinny flat-top upper receiver, standard US infantry rifle.",
+        options: ["M4A1 Carbine", "HK416", "FN SCAR-L", "SIG MCX"]
+      },
+      {
+        name: "Steyr AUG",
+        origin: "Austria",
+        caliber: "5.56x45mm NATO",
+        spec: "Pioneering bullpup configuration with action behind trigger, translucent magazine, and integrated optical scope.",
+        options: ["Steyr AUG", "FAMAS", "SA80 / L85", "TAR-21 Tavor"]
+      },
+      {
+        name: "FN P90",
+        origin: "Belgium",
+        caliber: "5.7x28mm Armor-Piercing",
+        spec: "Compact ambidextrous PDW with unique horizontal top-mounted 50-round magazine and bottom-ejection chute.",
+        options: ["FN P90", "MP7", "PP-19 Bizon", "Uzi"]
+      },
+      {
+        name: "Barrett M82 (.50 Cal)",
+        origin: "USA",
+        caliber: ".50 BMG (12.7x99mm)",
+        spec: "Semi-automatic anti-materiel sniper rifle with fluted barrel and distinctive arrowhead dual-chamber muzzle brake.",
+        options: ["Barrett M82", "Accuracy International AX50", "CheyTac M200", "McMillan TAC-50"]
+      },
+      {
+        name: "Heckler & Koch MP5",
+        origin: "Germany",
+        caliber: "9x19mm Parabellum",
+        spec: "Roller-delayed blowback submachine gun favored worldwide by SAS, GSG 9, and SWAT hostage rescue units.",
+        options: ["HK MP5", "CZ Scorpion Evo", "MAC-10", "Beretta M12"]
+      },
+      {
+        name: "Karabiner 98k",
+        origin: "Germany",
+        caliber: "7.92x57mm Mauser",
+        spec: "Controlled-feed bolt-action military service rifle with internal 5-round stripper clip magazine; standard WWII Wehrmacht arm.",
+        options: ["Karabiner 98k", "Mosin-Nagant", "Lee-Enfield No. 4", "Springfield M1903"]
+      }
+    ];
+
+    // 5. Camo & Uniform Spotter
+    const CAMO_ROUNDS = [
+      {
+        pattern: "Flecktarn",
+        nation: "Germany (Bundeswehr)",
+        clue: "5-color disruptive pea-dot pattern (dark green, light green, black, red-brown, olive).",
+        options: ["Germany (Bundeswehr)", "Switzerland", "Austria", "Netherlands"]
+      },
+      {
+        pattern: "MultiCam",
+        nation: "USA / International Special Ops",
+        clue: "7-color gradient pattern blending browns, khakis, and lime greens across multiple environments.",
+        options: ["USA / International Special Ops", "Russia", "Sweden", "Israel"]
+      },
+      {
+        pattern: "M81 Woodland",
+        nation: "United States (1981-2000s)",
+        clue: "High-contrast 4-color pattern (sand, brown, green, black) copied by dozens of nations worldwide.",
+        options: ["United States (1981-2000s)", "France", "Spain", "Poland"]
+      },
+      {
+        pattern: "MARPAT (Marine Pattern)",
+        nation: "United States Marine Corps",
+        clue: "Digital pixelated camouflage containing tiny embedded Eagle, Globe, and Anchor emblems.",
+        options: ["US Marine Corps", "British Royal Marines", "Russian VDV", "French Foreign Legion"]
+      },
+      {
+        pattern: "CADPAT (Canadian Disruptive Pattern)",
+        nation: "Canada",
+        clue: "The world's first operational computerized digital camouflage system using mathematically spaced pixels.",
+        options: ["Canada", "Norway", "Denmark", "Australia"]
+      },
+      {
+        pattern: "Desert DPM (Disruptive Pattern Material)",
+        nation: "United Kingdom",
+        clue: "British Army brushstroke camouflage issued in 2-colour and 4-colour Gulf War configurations.",
+        options: ["United Kingdom", "Saudi Arabia", "South Africa", "Jordan"]
+      },
+      {
+        pattern: "M90 Splinter",
+        nation: "Sweden",
+        clue: "Distinct hard-edged geometric polygon camouflage designed for Nordic forests and tundra.",
+        options: ["Sweden", "Finland", "Estonia", "Japan"]
+      },
+      {
+        pattern: "Tigerstripe",
+        nation: "Vietnam War (US Special Forces)",
+        clue: "Dense horizontal interlocking brushstrokes developed for close-quarters jungle warfare.",
+        options: ["Vietnam War (US Special Forces)", "Rhodesian SAS", "Cuban Troops", "Korean Marines"]
+      },
+      {
+        pattern: "Alpenflage (TAZ 57)",
+        nation: "Switzerland",
+        clue: "High-contrast alpine pattern with distinctive bright red/orange patches to blend with mountain scree.",
+        options: ["Switzerland", "Italy", "Austria", "Czech Republic"]
+      }
+    ];
+
+    // 6. Word Scramble (Office + Tactical)
     const SCRAMBLE_WORDS = [
       { word: "DEADLINE", hint: "Something your boss reminds you about daily" },
       { word: "ESPRESSO", hint: "Fuel for the 9-to-5 grind" },
-      { word: "PROMOTION", hint: "The ultimate reward" },
-      { word: "SPREADSHEET", hint: "Rows, columns, and formulas" },
+      { word: "PROMOTION", hint: "The ultimate corporate reward" },
+      { word: "SPREADSHEET", hint: "Rows, columns, and endless formulas" },
       { word: "MEETING", hint: "This could have been an email" },
-      { word: "SYNERGY", hint: "Favorite corporate buzzword" }
+      { word: "SYNERGY", hint: "Favorite management buzzword" },
+      { word: "RECONNAISSANCE", hint: "Military mission to observe the terrain" },
+      { word: "RADAR", hint: "Detection system that works equally well forward and backwards" },
+      { word: "SUBMACHINE", hint: "Rapid-fire close quarters firearm type" },
+      { word: "SUPERSONIC", hint: "Faster than the speed of sound" },
+      { word: "CAMOUFLAGE", hint: "Art of visual concealment" },
+      { word: "TACTICAL", hint: "Calculated maneuvering under pressure" }
     ];
 
-    // --- MAIN APPLICATION COMPONENT ---
+    // ==========================================
+    // MAIN APPLICATION WRAPPER
+    // ==========================================
     function App() {
       const [roomCode, setRoomCode] = useState('');
       const [inputCode, setInputCode] = useState('');
@@ -78,7 +321,6 @@
       const peerRef = useRef(null);
       const connRef = useRef(null);
 
-      // Clean up connections on unmount
       useEffect(() => {
         return () => {
           if (connRef.current) connRef.current.close();
@@ -86,14 +328,12 @@
         };
       }, []);
 
-      // Broadcast state to other player
       const sendData = (data) => {
         if (connRef.current && connRef.current.open) {
           connRef.current.send(data);
         }
       };
 
-      // Handler for received messages
       const handleIncomingData = (data) => {
         if (data.type === 'START_GAME') {
           setActiveGame(data.game);
@@ -105,12 +345,11 @@
         }
       };
 
-      // Host a new Room
       const hostRoom = () => {
         const code = Math.random().toString(36).substring(2, 6).toUpperCase();
         setRoomCode(code);
         setRole('host');
-        setStatusMsg('Connecting to matchmaking server...');
+        setStatusMsg('Connecting to lobby server...');
 
         const peer = new Peer('duo-' + code);
         peerRef.current = peer;
@@ -123,24 +362,23 @@
           connRef.current = conn;
           conn.on('open', () => {
             setConnected(true);
-            setStatusMsg('Opponent joined! Ready to play.');
+            setStatusMsg('Opponent connected! Choose a game.');
             playTone(600, 'sine', 0.2);
           });
           conn.on('data', handleIncomingData);
         });
 
-        peer.on('error', (err) => {
-          setStatusMsg('Room code collision or connection error. Try again.');
+        peer.on('error', () => {
+          setStatusMsg('Code conflict or connection reset. Please retry.');
         });
       };
 
-      // Join an existing Room
       const joinRoom = () => {
         if (!inputCode || inputCode.length < 4) return;
         const code = inputCode.trim().toUpperCase();
         setRoomCode(code);
         setRole('guest');
-        setStatusMsg('Searching for host...');
+        setStatusMsg('Finding room...');
 
         const peer = new Peer();
         peerRef.current = peer;
@@ -151,7 +389,7 @@
 
           conn.on('open', () => {
             setConnected(true);
-            setStatusMsg('Connected to room!');
+            setStatusMsg('Connected to game room!');
             playTone(600, 'sine', 0.2);
           });
 
@@ -159,15 +397,14 @@
         });
 
         peer.on('error', () => {
-          setStatusMsg('Could not find room with that code.');
+          setStatusMsg('Could not find active game with that code.');
         });
       };
 
-      // Solo / Pass-and-Play Mode
       const startSolo = () => {
         setRole('solo');
         setConnected(true);
-        setStatusMsg('Practice / Pass-and-Play Mode Active');
+        setStatusMsg('Practice / Solo Sandbox Active');
       };
 
       const selectGame = (gameId) => {
@@ -189,213 +426,872 @@
       };
 
       return (
-        <div className="min-h-screen flex flex-col justify-between p-4 md:p-8 max-w-5xl mx-auto">
-          {/* Header */}
+        <div className="min-h-screen flex flex-col justify-between p-4 md:p-8 max-w-6xl mx-auto">
+          {/* Header Bar */}
           <header className="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center font-black text-xl shadow-lg shadow-indigo-500/20">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-rose-500 flex items-center justify-center font-black text-2xl shadow-xl shadow-indigo-500/20">
                 ⚡
               </div>
               <div>
-                <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                  DuoGames <span className="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/30">1v1 Edition</span>
+                <h1 className="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                  DuoGames <span className="text-[10px] uppercase font-bold tracking-widest bg-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-full border border-indigo-500/30">1v1 Showdown</span>
                 </h1>
-                <p className="text-xs text-slate-400">Quick-fire office showdown</p>
+                <p className="text-xs text-slate-400">Tactical, geographical, and reaction duels</p>
               </div>
             </div>
 
-            {/* Match Status / Score Banner */}
             {connected && (
-              <div className="flex items-center gap-4 bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl">
+              <div className="flex items-center gap-4 bg-slate-900 border border-slate-800 px-4 py-2 rounded-2xl shadow-lg">
                 <div className="text-right">
-                  <div className="text-xs font-semibold text-slate-400">{role === 'host' ? 'YOU (Host)' : 'Player 1'}</div>
-                  <div className="text-lg font-bold text-indigo-400">{scores.host}</div>
+                  <div className="text-[11px] font-bold text-indigo-400">{role === 'host' ? 'YOU (Host)' : 'Player 1'}</div>
+                  <div className="text-xl font-black text-white">{scores.host}</div>
                 </div>
                 <div className="text-xs text-slate-600 font-black">VS</div>
                 <div className="text-left">
-                  <div className="text-xs font-semibold text-slate-400">{role === 'guest' ? 'YOU (Guest)' : 'Player 2'}</div>
-                  <div className="text-lg font-bold text-emerald-400">{scores.guest}</div>
+                  <div className="text-[11px] font-bold text-emerald-400">{role === 'guest' ? 'YOU (Guest)' : 'Player 2'}</div>
+                  <div className="text-xl font-black text-white">{scores.guest}</div>
                 </div>
               </div>
             )}
           </header>
 
-          {/* MAIN VIEW */}
+          {/* MAIN CONTENT AREA */}
           <main className="flex-1 flex flex-col justify-center">
             {!connected ? (
-              /* --- SETUP / CONNECTION VIEW --- */
-              <div className="max-w-md mx-auto w-full space-y-6 bg-slate-900/60 p-6 md:p-8 rounded-2xl border border-slate-800 shadow-2xl backdrop-blur-md">
-                <div className="text-center space-y-2">
-                  <h2 className="text-2xl font-bold text-white">Choose Connection</h2>
-                  <p className="text-xs text-slate-400">Play live with your coworker or practice solo</p>
+              /* --- LOBBY VIEW --- */
+              <div className="max-w-md mx-auto w-full space-y-6 bg-slate-900/70 p-6 md:p-8 rounded-3xl border border-slate-800 shadow-2xl backdrop-blur-xl">
+                <div className="text-center space-y-1">
+                  <h2 className="text-2xl font-black text-white">Join the Arena</h2>
+                  <p className="text-xs text-slate-400">Play real-time against your boss or test alone</p>
                 </div>
 
                 <div className="space-y-4">
-                  {/* Create Room Button */}
                   <button 
                     onClick={hostRoom}
-                    className="w-full py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition duration-200"
+                    className="w-full py-4 px-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold rounded-2xl shadow-xl shadow-indigo-600/30 transition transform active:scale-98"
                   >
                     Create New Room (Host)
                   </button>
 
                   <div className="flex items-center gap-2">
                     <div className="h-[1px] bg-slate-800 flex-1"></div>
-                    <span className="text-xs text-slate-500 font-medium">OR JOIN WITH CODE</span>
+                    <span className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">Or Enter Room Code</span>
                     <div className="h-[1px] bg-slate-800 flex-1"></div>
                   </div>
 
-                  {/* Join Room */}
                   <div className="flex gap-2">
                     <input 
                       type="text" 
-                      placeholder="ENTER 4-LETTER CODE"
+                      placeholder="CODE (e.g. A7X9)"
                       maxLength={4}
                       value={inputCode}
                       onChange={(e) => setInputCode(e.target.value.toUpperCase())}
-                      className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center tracking-widest font-bold uppercase focus:outline-none focus:border-indigo-500 transition"
+                      className="flex-1 bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3.5 text-center tracking-widest font-black uppercase text-lg focus:outline-none focus:border-indigo-500 transition"
                     />
                     <button 
                       onClick={joinRoom}
-                      className="px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition duration-200"
+                      className="px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl shadow-lg shadow-emerald-600/20 transition"
                     >
                       Join
                     </button>
                   </div>
 
-                  {/* Practice Solo */}
                   <button 
                     onClick={startSolo}
-                    className="w-full py-2.5 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-lg transition"
+                    className="w-full py-3 text-xs font-semibold text-slate-400 hover:text-white bg-slate-950/60 hover:bg-slate-800 border border-slate-800/80 rounded-xl transition"
                   >
-                    Play Single-Player / Pass & Play (Local Test)
+                    🎮 Solo Practice / Pass-and-Play
                   </button>
                 </div>
 
                 {statusMsg && (
-                  <div className="p-3 bg-slate-950/80 border border-indigo-500/20 rounded-xl text-center text-xs text-indigo-300 font-mono">
+                  <div className="p-3 bg-slate-950/90 border border-indigo-500/30 rounded-xl text-center text-xs text-indigo-300 font-mono">
                     {statusMsg}
                   </div>
                 )}
               </div>
             ) : !activeGame ? (
-              /* --- GAME SELECTOR GRID --- */
+              /* --- GAME SELECTOR --- */
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-2xl font-bold">Select a Battle</h2>
-                    <p className="text-xs text-slate-400">Click any card to launch the match for both players</p>
+                    <h2 className="text-2xl font-black text-white">Select a Battle</h2>
+                    <p className="text-xs text-slate-400">Launch any game below for both screens</p>
                   </div>
-                  <div className="text-xs bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-slate-400">
-                    Room: <span className="font-mono font-bold text-indigo-400">{roomCode || 'LOCAL'}</span>
+                  <div className="text-xs bg-slate-900 border border-slate-800 px-3.5 py-1.5 rounded-xl font-mono text-slate-300">
+                    Room: <span className="font-bold text-indigo-400">{roomCode || 'SOLO'}</span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   <GameCard 
-                    title="Connect 4" 
-                    desc="Classic tactical vertical 4-in-a-row board"
-                    icon="🔴" 
-                    onClick={() => selectGame('connect4')}
-                  />
-                  <GameCard 
-                    title="GeoGuess" 
-                    desc="Click the world map closest to famous landmarks"
+                    title="GeoGuess 2.0" 
+                    desc="Interactive satellite map. Exact KM distance tracking showdown!"
                     icon="🌍" 
+                    tag="Distance Calc"
                     onClick={() => selectGame('geoguess')}
                   />
                   <GameCard 
+                    title="Warbirds & Aircraft" 
+                    desc="Identify combat jets, bombers & WWII warbirds by silhouette and specs"
+                    icon="✈️" 
+                    tag="Military Recon"
+                    onClick={() => selectGame('aircraft')}
+                  />
+                  <GameCard 
+                    title="Firearms & Rifles" 
+                    desc="Service rifles, bullpups, and snipers. Identify weapon by caliber and role"
+                    icon="🎯" 
+                    tag="Armory ID"
+                    onClick={() => selectGame('weapons')}
+                  />
+                  <GameCard 
+                    title="Camo & Uniforms" 
+                    desc="Identify military patterns: Flecktarn, Multicam, Woodland, MARPAT & more"
+                    icon="🪖" 
+                    tag="Spotter"
+                    onClick={() => selectGame('camo')}
+                  />
+                  <GameCard 
                     title="Guess the Era" 
-                    desc="Historical trivia showdown. Closest year wins"
+                    desc="Historical trivia showdown. See exact years off for both players"
                     icon="⏳" 
+                    tag="25+ Events"
                     onClick={() => selectGame('era')}
                   />
                   <GameCard 
+                    title="Connect 4" 
+                    desc="Classic tactical vertical four-in-a-row board"
+                    icon="🔴" 
+                    tag="Tactics"
+                    onClick={() => selectGame('connect4')}
+                  />
+                  <GameCard 
                     title="Quick Draw" 
-                    desc="Reflex duel! Wait for green, click instantly"
+                    desc="Reflex duel. Wait for green, click instantly without jumping the gun"
                     icon="⚡" 
+                    tag="Speed"
                     onClick={() => selectGame('quickdraw')}
                   />
                   <GameCard 
-                    title="Tug of War" 
-                    desc="Button mashing battle. Pull the rope across"
-                    icon="🪢" 
-                    onClick={() => selectGame('tug')}
+                    title="Word Scramble" 
+                    desc="Office and tactical anagram sprint. Unscramble the fastest"
+                    icon="🔤" 
+                    tag="Puzzle"
+                    onClick={() => selectGame('scramble')}
                   />
                   <GameCard 
-                    title="Word Scramble" 
-                    desc="Office-themed anagram sprint. First correct unscramble wins"
-                    icon="🔤" 
-                    onClick={() => selectGame('scramble')}
+                    title="Tug of War" 
+                    desc="Rapid button-mashing contest. Pull the knot past the finish line"
+                    icon="🪢" 
+                    tag="Mashing"
+                    onClick={() => selectGame('tug')}
                   />
                 </div>
               </div>
             ) : (
-              /* --- GAME CONTAINER --- */
+              /* --- ACTIVE GAME CONTAINER --- */
               <div className="relative">
                 <button 
                   onClick={backToLobby}
-                  className="mb-4 text-xs font-semibold flex items-center gap-2 text-slate-400 hover:text-white bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg transition"
+                  className="mb-4 text-xs font-bold flex items-center gap-2 text-slate-400 hover:text-white bg-slate-900 border border-slate-800 px-3.5 py-2 rounded-xl transition shadow-md"
                 >
-                  ← Return to Lobby
+                  ← Return to Game Menu
                 </button>
 
-                {activeGame === 'connect4' && <Connect4 role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
                 {activeGame === 'geoguess' && <GeoGuess role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+                {activeGame === 'aircraft' && <AircraftRecon role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+                {activeGame === 'weapons' && <WeaponsRecon role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+                {activeGame === 'camo' && <CamoSpotter role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
                 {activeGame === 'era' && <GuessEra role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+                {activeGame === 'connect4' && <Connect4 role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
                 {activeGame === 'quickdraw' && <QuickDraw role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
-                {activeGame === 'tug' && <TugOfWar role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
                 {activeGame === 'scramble' && <WordScramble role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+                {activeGame === 'tug' && <TugOfWar role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
               </div>
             )}
           </main>
 
-          <footer className="text-center text-xs text-slate-600 border-t border-slate-800/60 pt-4 mt-6">
-            DuoGames • Running Peer-to-Peer directly in your browser
+          <footer className="text-center text-xs text-slate-600 border-t border-slate-800/80 pt-4 mt-8">
+            DuoGames 1v1 • Peer-to-Peer Browser Multiplayer
           </footer>
         </div>
       );
     }
 
-    // --- GAME CARD COMPONENT ---
-    function GameCard({ title, desc, icon, onClick }) {
+    // --- CARD COMPONENT ---
+    function GameCard({ title, desc, icon, tag, onClick }) {
       return (
         <div 
           onClick={onClick}
-          className="group relative cursor-pointer bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-2xl p-6 transition duration-200 hover:-translate-y-1 shadow-lg hover:shadow-indigo-500/10 flex flex-col justify-between"
+          className="group relative cursor-pointer bg-slate-900/90 border border-slate-800 hover:border-indigo-500/50 rounded-3xl p-5 transition duration-200 hover:-translate-y-1 shadow-lg hover:shadow-indigo-500/10 flex flex-col justify-between"
         >
-          <div className="text-3xl mb-4 p-3 bg-slate-950 w-fit rounded-xl border border-slate-800/80 group-hover:scale-110 transition">
-            {icon}
-          </div>
           <div>
-            <h3 className="font-bold text-lg text-white group-hover:text-indigo-400 transition">{title}</h3>
-            <p className="text-xs text-slate-400 mt-1">{desc}</p>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-3xl p-2.5 bg-slate-950 rounded-2xl border border-slate-800/80 group-hover:scale-110 transition">
+                {icon}
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-400 group-hover:bg-indigo-500/20 group-hover:text-indigo-400 px-2 py-0.5 rounded-full transition">
+                {tag}
+              </span>
+            </div>
+            <h3 className="font-bold text-base text-white group-hover:text-indigo-400 transition">{title}</h3>
+            <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">{desc}</p>
           </div>
-          <div className="mt-4 text-xs font-semibold text-indigo-400 opacity-0 group-hover:opacity-100 transition flex items-center gap-1">
-            Play Game →
+          <div className="mt-4 text-xs font-bold text-indigo-400 opacity-0 group-hover:opacity-100 transition flex items-center gap-1">
+            Battle Now →
           </div>
         </div>
       );
     }
 
     // ==========================================
-    // 1. CONNECT 4
+    // 1. GEOGUESS 2.0 (With Real Km Distance & Comparison)
+    // ==========================================
+    function GeoGuess({ role, sendData, connRef, addPoint }) {
+      const [roundIdx, setRoundIdx] = useState(0);
+      const [myPin, setMyPin] = useState(null);
+      const [oppPin, setOppPin] = useState(null);
+      const [revealed, setRevealed] = useState(false);
+      const [roundWinner, setRoundWinner] = useState(null);
+
+      const current = GEO_ROUNDS[roundIdx % GEO_ROUNDS.length];
+
+      useEffect(() => {
+        if (!connRef.current) return;
+        const handler = (data) => {
+          if (data.type === 'GEO_PIN') {
+            setOppPin(data.pin);
+          } else if (data.type === 'GEO_NEXT') {
+            nextRound();
+          }
+        };
+        connRef.current.on('data', handler);
+      }, [roundIdx]);
+
+      // Calculate distances once pins are placed
+      useEffect(() => {
+        if (myPin && (role === 'solo' || oppPin)) {
+          setRevealed(true);
+          const dMy = getDistanceKm(myPin.x, myPin.y, current.x, current.y);
+
+          if (role === 'solo') {
+            setRoundWinner('solo');
+          } else if (oppPin) {
+            const dOpp = getDistanceKm(oppPin.x, oppPin.y, current.x, current.y);
+            if (dMy < dOpp) {
+              setRoundWinner('me');
+              addPoint(role);
+            } else if (dOpp < dMy) {
+              setRoundWinner('opp');
+              addPoint(role === 'host' ? 'guest' : 'host');
+            } else {
+              setRoundWinner('tie');
+            }
+          }
+        }
+      }, [myPin, oppPin]);
+
+      const handleMapClick = (e) => {
+        if (myPin || revealed) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        setMyPin({ x, y });
+        playTone(550, 'sine', 0.1);
+        sendData({ type: 'GEO_PIN', pin: { x, y } });
+      };
+
+      const nextRound = () => {
+        setMyPin(null);
+        setOppPin(null);
+        setRevealed(false);
+        setRoundWinner(null);
+        setRoundIdx(r => r + 1);
+      };
+
+      const myDist = myPin ? getDistanceKm(myPin.x, myPin.y, current.x, current.y) : null;
+      const oppDist = oppPin ? getDistanceKm(oppPin.x, oppPin.y, current.x, current.y) : null;
+
+      return (
+        <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl max-w-4xl mx-auto flex flex-col items-center select-none shadow-2xl">
+          <div className="text-center mb-4">
+            <span className="text-[11px] uppercase tracking-widest text-indigo-400 font-black">Round {roundIdx + 1} of {GEO_ROUNDS.length}</span>
+            <h3 className="text-2xl md:text-3xl font-black text-white mt-1">{current.name}</h3>
+            <p className="text-xs text-slate-400 italic mt-0.5">Clue: {current.hint}</p>
+          </div>
+
+          {/* SATELLITE MAP CONTAINER */}
+          <div 
+            onClick={handleMapClick}
+            className="relative w-full aspect-[2/1] bg-slate-950 rounded-2xl border-2 border-slate-700/80 overflow-hidden cursor-crosshair shadow-2xl"
+          >
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Equirectangular_projection_SW.jpg/1280px-Equirectangular_projection_SW.jpg"
+              alt="World Map"
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-fill pointer-events-none filter brightness-90 contrast-110 saturate-125"
+            />
+
+            {/* Flight Path Lines (SVG Overlay) */}
+            {revealed && (
+              <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                {myPin && (
+                  <line 
+                    x1={`${myPin.x}%`} y1={`${myPin.y}%`} 
+                    x2={`${current.x}%`} y2={`${current.y}%`} 
+                    stroke="#6366f1" strokeWidth="2" strokeDasharray="4 4" 
+                  />
+                )}
+                {oppPin && (
+                  <line 
+                    x1={`${oppPin.x}%`} y1={`${oppPin.y}%`} 
+                    x2={`${current.x}%`} y2={`${current.y}%`} 
+                    stroke="#f43f5e" strokeWidth="2" strokeDasharray="4 4" 
+                  />
+                )}
+              </svg>
+            )}
+
+            {/* Actual Target Pin */}
+            {revealed && (
+              <>
+                <div 
+                  className="absolute w-6 h-6 bg-emerald-400 rounded-full -translate-x-1/2 -translate-y-1/2 border-2 border-white shadow-lg animate-ping pointer-events-none"
+                  style={{ left: `${current.x}%`, top: `${current.y}%` }}
+                />
+                <div 
+                  className="absolute w-6 h-6 bg-emerald-500 rounded-full -translate-x-1/2 -translate-y-1/2 border-2 border-white shadow-xl pointer-events-none flex items-center justify-center text-xs font-black text-white"
+                  style={{ left: `${current.x}%`, top: `${current.y}%` }}
+                >
+                  ★
+                </div>
+              </>
+            )}
+
+            {/* Player's Pin */}
+            {myPin && (
+              <div 
+                className="absolute w-4 h-4 bg-indigo-500 rounded-full -translate-x-1/2 -translate-y-1/2 border-2 border-white shadow-lg pointer-events-none ring-2 ring-indigo-400/50"
+                style={{ left: `${myPin.x}%`, top: `${myPin.y}%` }}
+              />
+            )}
+
+            {/* Opponent's Pin */}
+            {oppPin && revealed && (
+              <div 
+                className="absolute w-4 h-4 bg-rose-500 rounded-full -translate-x-1/2 -translate-y-1/2 border-2 border-white shadow-lg pointer-events-none ring-2 ring-rose-400/50"
+                style={{ left: `${oppPin.x}%`, top: `${oppPin.y}%` }}
+              />
+            )}
+          </div>
+
+          {/* ROUND COMPARISON STATS */}
+          {revealed ? (
+            <div className="w-full mt-6 bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div className="bg-slate-900 border border-indigo-500/30 p-3 rounded-xl">
+                  <div className="text-[11px] font-bold text-indigo-400 uppercase">Your Guess</div>
+                  <div className="text-2xl font-black text-white mt-0.5">{myDist?.toLocaleString()} <span className="text-xs text-slate-400 font-normal">km away</span></div>
+                </div>
+
+                {role !== 'solo' ? (
+                  <div className="bg-slate-900 border border-rose-500/30 p-3 rounded-xl">
+                    <div className="text-[11px] font-bold text-rose-400 uppercase">Opponent Guess</div>
+                    <div className="text-2xl font-black text-white mt-0.5">{oppDist?.toLocaleString()} <span className="text-xs text-slate-400 font-normal">km away</span></div>
+                  </div>
+                ) : (
+                  <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl">
+                    <div className="text-[11px] font-bold text-slate-400 uppercase">Proximity</div>
+                    <div className="text-2xl font-black text-emerald-400 mt-0.5">{myDist < 500 ? "🎯 Bullseye!" : myDist < 2000 ? "👍 Close" : "🌍 Distant"}</div>
+                  </div>
+                )}
+              </div>
+
+              {role !== 'solo' && (
+                <div className="text-center font-bold text-sm">
+                  {roundWinner === 'me' ? (
+                    <span className="text-emerald-400">🏆 You were closer by {(oppDist - myDist).toLocaleString()} km! (+1 Point)</span>
+                  ) : roundWinner === 'opp' ? (
+                    <span className="text-rose-400">💥 Opponent was closer by {(myDist - oppDist).toLocaleString()} km!</span>
+                  ) : (
+                    <span className="text-slate-400">It's a dead heat tie!</span>
+                  )}
+                </div>
+              )}
+
+              <button 
+                onClick={() => { nextRound(); sendData({ type: 'GEO_NEXT' }); }}
+                className="w-full py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 rounded-xl font-bold text-sm shadow-lg transition"
+              >
+                Next Landmark →
+              </button>
+            </div>
+          ) : (
+            <div className="mt-4 text-xs font-semibold text-slate-400">
+              {!myPin ? "Click anywhere on the satellite map to place your pin" : "Pin locked! Waiting for opponent..."}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 2. RECON: COMBAT WARBIRDS & AIRCRAFT
+    // ==========================================
+    function AircraftRecon({ role, sendData, connRef, addPoint }) {
+      const [idx, setIdx] = useState(0);
+      const [myPick, setMyPick] = useState(null);
+      const [oppPick, setOppPick] = useState(null);
+      const [resolved, setResolved] = useState(false);
+
+      const cur = AIRCRAFT_ROUNDS[idx % AIRCRAFT_ROUNDS.length];
+
+      useEffect(() => {
+        if (!connRef.current) return;
+        connRef.current.on('data', (d) => {
+          if (d.type === 'AIR_ANSWER') setOppPick(d.answer);
+          else if (d.type === 'AIR_NEXT') next();
+        });
+      }, [idx]);
+
+      useEffect(() => {
+        if (myPick && (role === 'solo' || oppPick)) {
+          setResolved(true);
+          const iAmRight = myPick === cur.name;
+          const oppRight = oppPick === cur.name;
+
+          if (role !== 'solo') {
+            if (iAmRight && !oppRight) addPoint(role);
+            else if (oppRight && !iAmRight) addPoint(role === 'host' ? 'guest' : 'host');
+          } else if (iAmRight) {
+            playTone(800, 'sine', 0.15);
+          }
+        }
+      }, [myPick, oppPick]);
+
+      const choose = (opt) => {
+        if (myPick) return;
+        setMyPick(opt);
+        sendData({ type: 'AIR_ANSWER', answer: opt });
+        playTone(500, 'sine', 0.08);
+      };
+
+      const next = () => {
+        setMyPick(null);
+        setOppPick(null);
+        setResolved(false);
+        setIdx(i => i + 1);
+      };
+
+      return (
+        <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl max-w-xl mx-auto space-y-6 shadow-2xl">
+          <div className="flex justify-between items-center">
+            <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Combat Aircraft ID</span>
+            <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Target #{idx + 1}</span>
+          </div>
+
+          <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 text-center space-y-3">
+            <div className="text-5xl">{cur.icon}</div>
+            <div className="text-xs font-bold uppercase tracking-wider text-emerald-400">{cur.role}</div>
+            <p className="text-xs text-slate-300 leading-relaxed font-mono bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+              "{cur.spec}"
+            </p>
+            <div className="text-[11px] text-slate-500">Country of Origin: <span className="text-slate-300 font-bold">{cur.origin}</span></div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {cur.options.map((opt, i) => {
+              const isCorrect = resolved && opt === cur.name;
+              const isMyChoice = myPick === opt;
+              const isOppChoice = resolved && oppPick === opt;
+
+              let btnStyle = "bg-slate-950 border-slate-800 hover:border-indigo-500/50 text-slate-200";
+              if (isCorrect) btnStyle = "bg-emerald-950/80 border-emerald-500 text-emerald-300";
+              else if (isMyChoice && !isCorrect && resolved) btnStyle = "bg-rose-950/80 border-rose-500 text-rose-300";
+
+              return (
+                <button
+                  key={i}
+                  disabled={myPick !== null}
+                  onClick={() => choose(opt)}
+                  className={`p-4 rounded-xl border-2 font-bold text-sm text-left transition flex justify-between items-center ${btnStyle}`}
+                >
+                  <span>{opt}</span>
+                  {isMyChoice && <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded">You</span>}
+                  {isOppChoice && <span className="text-[10px] bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded">Opp</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          {resolved && (
+            <div className="space-y-4 pt-2">
+              <div className="text-center text-xs font-bold">
+                {myPick === cur.name ? (
+                  <span className="text-emerald-400">✓ Target Confirmed: {cur.name}!</span>
+                ) : (
+                  <span className="text-rose-400">✗ Negative! Correct answer: {cur.name}</span>
+                )}
+              </div>
+              <button 
+                onClick={() => { next(); sendData({ type: 'AIR_NEXT' }); }}
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm shadow-lg"
+              >
+                Next Aircraft →
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 3. RECON: FIREARMS & RIFLES
+    // ==========================================
+    function WeaponsRecon({ role, sendData, connRef, addPoint }) {
+      const [idx, setIdx] = useState(0);
+      const [myPick, setMyPick] = useState(null);
+      const [oppPick, setOppPick] = useState(null);
+      const [resolved, setResolved] = useState(false);
+
+      const cur = WEAPON_ROUNDS[idx % WEAPON_ROUNDS.length];
+
+      useEffect(() => {
+        if (!connRef.current) return;
+        connRef.current.on('data', (d) => {
+          if (d.type === 'WEAPON_ANSWER') setOppPick(d.answer);
+          else if (d.type === 'WEAPON_NEXT') next();
+        });
+      }, [idx]);
+
+      useEffect(() => {
+        if (myPick && (role === 'solo' || oppPick)) {
+          setResolved(true);
+          const iAmRight = myPick === cur.name;
+          const oppRight = oppPick === cur.name;
+
+          if (role !== 'solo') {
+            if (iAmRight && !oppRight) addPoint(role);
+            else if (oppRight && !iAmRight) addPoint(role === 'host' ? 'guest' : 'host');
+          }
+        }
+      }, [myPick, oppPick]);
+
+      const choose = (opt) => {
+        if (myPick) return;
+        setMyPick(opt);
+        sendData({ type: 'WEAPON_ANSWER', answer: opt });
+        playTone(600, 'triangle', 0.08);
+      };
+
+      const next = () => {
+        setMyPick(null);
+        setOppPick(null);
+        setResolved(false);
+        setIdx(i => i + 1);
+      };
+
+      return (
+        <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl max-w-xl mx-auto space-y-6 shadow-2xl">
+          <div className="flex justify-between items-center">
+            <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Armory Service Rifle ID</span>
+            <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Weapon #{idx + 1}</span>
+          </div>
+
+          <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-mono font-bold text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-lg border border-amber-400/20">
+                Caliber: {cur.caliber}
+              </span>
+              <span className="text-xs text-slate-400">Origin: <strong className="text-white">{cur.origin}</strong></span>
+            </div>
+            <p className="text-xs text-slate-300 font-mono bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 leading-relaxed">
+              "{cur.spec}"
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {cur.options.map((opt, i) => {
+              const isCorrect = resolved && opt === cur.name;
+              const isMyChoice = myPick === opt;
+              const isOppChoice = resolved && oppPick === opt;
+
+              let btnStyle = "bg-slate-950 border-slate-800 hover:border-indigo-500/50 text-slate-200";
+              if (isCorrect) btnStyle = "bg-emerald-950/80 border-emerald-500 text-emerald-300";
+              else if (isMyChoice && !isCorrect && resolved) btnStyle = "bg-rose-950/80 border-rose-500 text-rose-300";
+
+              return (
+                <button
+                  key={i}
+                  disabled={myPick !== null}
+                  onClick={() => choose(opt)}
+                  className={`p-4 rounded-xl border-2 font-bold text-sm text-left transition flex justify-between items-center ${btnStyle}`}
+                >
+                  <span>{opt}</span>
+                  {isMyChoice && <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded">You</span>}
+                  {isOppChoice && <span className="text-[10px] bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded">Opp</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          {resolved && (
+            <div className="space-y-4 pt-2">
+              <div className="text-center text-xs font-bold">
+                {myPick === cur.name ? (
+                  <span className="text-emerald-400">✓ Correct Identification: {cur.name}!</span>
+                ) : (
+                  <span className="text-rose-400">✗ Misfire! Correct answer was {cur.name}</span>
+                )}
+              </div>
+              <button 
+                onClick={() => { next(); sendData({ type: 'WEAPON_NEXT' }); }}
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm shadow-lg"
+              >
+                Next Weapon →
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 4. CAMO & UNIFORM SPOTTER
+    // ==========================================
+    function CamoSpotter({ role, sendData, connRef, addPoint }) {
+      const [idx, setIdx] = useState(0);
+      const [myPick, setMyPick] = useState(null);
+      const [oppPick, setOppPick] = useState(null);
+      const [resolved, setResolved] = useState(false);
+
+      const cur = CAMO_ROUNDS[idx % CAMO_ROUNDS.length];
+
+      useEffect(() => {
+        if (!connRef.current) return;
+        connRef.current.on('data', (d) => {
+          if (d.type === 'CAMO_ANSWER') setOppPick(d.answer);
+          else if (d.type === 'CAMO_NEXT') next();
+        });
+      }, [idx]);
+
+      useEffect(() => {
+        if (myPick && (role === 'solo' || oppPick)) {
+          setResolved(true);
+          const iAmRight = myPick === cur.nation;
+          const oppRight = oppPick === cur.nation;
+
+          if (role !== 'solo') {
+            if (iAmRight && !oppRight) addPoint(role);
+            else if (oppRight && !iAmRight) addPoint(role === 'host' ? 'guest' : 'host');
+          }
+        }
+      }, [myPick, oppPick]);
+
+      const choose = (opt) => {
+        if (myPick) return;
+        setMyPick(opt);
+        sendData({ type: 'CAMO_ANSWER', answer: opt });
+        playTone(550, 'sine', 0.08);
+      };
+
+      const next = () => {
+        setMyPick(null);
+        setOppPick(null);
+        setResolved(false);
+        setIdx(i => i + 1);
+      };
+
+      return (
+        <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl max-w-xl mx-auto space-y-6 shadow-2xl">
+          <div className="flex justify-between items-center">
+            <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Military Camo Spotter</span>
+            <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Pattern #{idx + 1}</span>
+          </div>
+
+          <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 text-center space-y-2">
+            <div className="text-3xl font-black text-white">{cur.pattern}</div>
+            <p className="text-xs text-slate-400 italic mt-1 leading-relaxed">
+              "{cur.clue}"
+            </p>
+          </div>
+
+          <div className="text-center text-xs font-bold text-slate-400">Which military / nation fielded this pattern?</div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {cur.options.map((opt, i) => {
+              const isCorrect = resolved && opt === cur.nation;
+              const isMyChoice = myPick === opt;
+              const isOppChoice = resolved && oppPick === opt;
+
+              let btnStyle = "bg-slate-950 border-slate-800 hover:border-indigo-500/50 text-slate-200";
+              if (isCorrect) btnStyle = "bg-emerald-950/80 border-emerald-500 text-emerald-300";
+              else if (isMyChoice && !isCorrect && resolved) btnStyle = "bg-rose-950/80 border-rose-500 text-rose-300";
+
+              return (
+                <button
+                  key={i}
+                  disabled={myPick !== null}
+                  onClick={() => choose(opt)}
+                  className={`p-4 rounded-xl border-2 font-bold text-xs text-left transition flex justify-between items-center ${btnStyle}`}
+                >
+                  <span>{opt}</span>
+                  {isMyChoice && <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded">You</span>}
+                  {isOppChoice && <span className="text-[10px] bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded">Opp</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          {resolved && (
+            <div className="space-y-4 pt-2">
+              <div className="text-center text-xs font-bold">
+                {myPick === cur.nation ? (
+                  <span className="text-emerald-400">✓ Correct Nation: {cur.nation}!</span>
+                ) : (
+                  <span className="text-rose-400">✗ Incorrect! Issued by: {cur.nation}</span>
+                )}
+              </div>
+              <button 
+                onClick={() => { next(); sendData({ type: 'CAMO_NEXT' }); }}
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm shadow-lg"
+              >
+                Next Camo Pattern →
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 5. GUESS THE ERA 2.0 (With Side-by-Side Breakdown)
+    // ==========================================
+    function GuessEra({ role, sendData, connRef, addPoint }) {
+      const [idx, setIdx] = useState(0);
+      const [val, setVal] = useState(1960);
+      const [myGuess, setMyGuess] = useState(null);
+      const [oppGuess, setOppGuess] = useState(null);
+      const [show, setShow] = useState(false);
+
+      const cur = ERA_ROUNDS[idx % ERA_ROUNDS.length];
+
+      useEffect(() => {
+        if (!connRef.current) return;
+        connRef.current.on('data', (d) => {
+          if (d.type === 'ERA_GUESS') setOppGuess(d.year);
+          else if (d.type === 'ERA_NEXT') next();
+        });
+      }, [idx]);
+
+      useEffect(() => {
+        if (myGuess !== null && (role === 'solo' || oppGuess !== null)) {
+          setShow(true);
+          const diff1 = Math.abs(myGuess - cur.year);
+          if (role !== 'solo') {
+            const diff2 = Math.abs(oppGuess - cur.year);
+            if (diff1 < diff2) addPoint(role);
+            else if (diff2 < diff1) addPoint(role === 'host' ? 'guest' : 'host');
+          }
+        }
+      }, [myGuess, oppGuess]);
+
+      const submit = () => {
+        setMyGuess(val);
+        sendData({ type: 'ERA_GUESS', year: val });
+        playTone(480, 'sine', 0.1);
+      };
+
+      const next = () => {
+        setMyGuess(null);
+        setOppGuess(null);
+        setShow(false);
+        setIdx(i => i + 1);
+      };
+
+      return (
+        <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl max-w-lg mx-auto text-center space-y-6 shadow-2xl">
+          <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Round {idx + 1} of {ERA_ROUNDS.length}</span>
+          <h3 className="text-xl md:text-2xl font-black text-white">{cur.event}</h3>
+
+          <div className="text-6xl font-black font-mono text-indigo-400 py-1">
+            {val}
+          </div>
+
+          {!show ? (
+            <div className="space-y-5">
+              <input 
+                type="range" 
+                min="1890" 
+                max="2025" 
+                value={val} 
+                onChange={(e) => setVal(Number(e.target.value))}
+                className="w-full accent-indigo-500 cursor-pointer h-2 bg-slate-950 rounded-lg"
+              />
+              <button 
+                onClick={submit}
+                disabled={myGuess !== null}
+                className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 rounded-2xl font-bold transition shadow-lg shadow-indigo-600/30"
+              >
+                {myGuess !== null ? "Locked in! Waiting for opponent..." : "Lock in Year"}
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              <div className="p-5 bg-slate-950 rounded-2xl border border-slate-800">
+                <div className="text-[11px] text-slate-500 uppercase font-black">Actual Year</div>
+                <div className="text-5xl font-black text-emerald-400 mt-1">{cur.year}</div>
+
+                <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-800/80">
+                  <div className="bg-slate-900 p-2.5 rounded-xl border border-indigo-500/20">
+                    <div className="text-[10px] uppercase font-bold text-indigo-400">You Guessed</div>
+                    <div className="text-lg font-bold text-white mt-0.5">{myGuess}</div>
+                    <div className="text-xs text-slate-400">Off by {Math.abs(myGuess - cur.year)} yrs</div>
+                  </div>
+
+                  {role !== 'solo' ? (
+                    <div className="bg-slate-900 p-2.5 rounded-xl border border-rose-500/20">
+                      <div className="text-[10px] uppercase font-bold text-rose-400">Opponent Guessed</div>
+                      <div className="text-lg font-bold text-white mt-0.5">{oppGuess}</div>
+                      <div className="text-xs text-slate-400">Off by {Math.abs(oppGuess - cur.year)} yrs</div>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-900 p-2.5 rounded-xl border border-slate-800 flex items-center justify-center text-xs font-bold text-emerald-400">
+                      {Math.abs(myGuess - cur.year) === 0 ? "Exact Match! 🎯" : Math.abs(myGuess - cur.year) <= 3 ? "Super Close!" : "Good Try"}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <button 
+                onClick={() => { next(); sendData({ type: 'ERA_NEXT' }); }}
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 rounded-2xl font-bold shadow-lg"
+              >
+                Next Historical Event →
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 6. CONNECT 4
     // ==========================================
     function Connect4({ role, sendData, connRef, addPoint }) {
       const ROWS = 6;
       const COLS = 7;
       const [board, setBoard] = useState(Array(ROWS).fill(null).map(() => Array(COLS).fill(null)));
-      const [turn, setTurn] = useState('host'); // 'host' (Red) or 'guest' (Yellow)
+      const [turn, setTurn] = useState('host');
       const [winner, setWinner] = useState(null);
 
       useEffect(() => {
         if (!connRef.current) return;
         const handler = (data) => {
-          if (data.type === 'C4_MOVE') {
-            applyMove(data.col, data.playerRole);
-          } else if (data.type === 'C4_RESET') {
-            resetBoard();
-          }
+          if (data.type === 'C4_MOVE') applyMove(data.col, data.playerRole);
+          else if (data.type === 'C4_RESET') resetBoard();
         };
         connRef.current.on('data', handler);
       }, [board, turn]);
@@ -456,17 +1352,17 @@
       const isMyTurn = role === 'solo' || turn === role;
 
       return (
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl max-w-lg mx-auto flex flex-col items-center">
+        <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl max-w-lg mx-auto flex flex-col items-center shadow-2xl">
           <div className="flex justify-between w-full mb-4 items-center">
-            <span className="text-sm font-semibold text-slate-300">
+            <span className="text-xs font-bold text-slate-300">
               {winner ? `Winner: ${winner.toUpperCase()}!` : `Turn: ${turn === 'host' ? 'Player 1 (Red)' : 'Player 2 (Yellow)'}`}
             </span>
-            <span className={`text-xs px-2 py-1 rounded font-bold ${isMyTurn ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+            <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${isMyTurn ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
               {winner ? 'GAME OVER' : isMyTurn ? 'YOUR MOVE' : 'WAITING...'}
             </span>
           </div>
 
-          <div className="bg-blue-800 p-3 rounded-2xl shadow-2xl grid grid-cols-7 gap-2 border-4 border-blue-900">
+          <div className="bg-blue-800 p-3.5 rounded-3xl shadow-2xl grid grid-cols-7 gap-2 border-4 border-blue-900">
             {Array.from({ length: COLS }).map((_, c) => (
               <div 
                 key={c} 
@@ -491,7 +1387,7 @@
           {winner && (
             <button 
               onClick={() => { resetBoard(); sendData({ type: 'C4_RESET' }); }}
-              className="mt-6 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/30"
+              className="mt-6 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/30"
             >
               Play Again
             </button>
@@ -501,238 +1397,19 @@
     }
 
     // ==========================================
-    // 2. GEOGUESS
-    // ==========================================
-    function GeoGuess({ role, sendData, connRef, addPoint }) {
-      const [roundIdx, setRoundIdx] = useState(0);
-      const [myPin, setMyPin] = useState(null);
-      const [oppPin, setOppPin] = useState(null);
-      const [revealed, setRevealed] = useState(false);
-
-      const current = GEO_ROUNDS[roundIdx % GEO_ROUNDS.length];
-
-      useEffect(() => {
-        if (!connRef.current) return;
-        connRef.current.on('data', (data) => {
-          if (data.type === 'GEO_PIN') {
-            setOppPin(data.pin);
-          } else if (data.type === 'GEO_NEXT') {
-            nextRound();
-          }
-        });
-      }, [roundIdx]);
-
-      // Check if both pinned
-      useEffect(() => {
-        if (myPin && (role === 'solo' || oppPin)) {
-          setRevealed(true);
-          const d1 = Math.hypot(myPin.x - current.x, myPin.y - current.y);
-          if (role !== 'solo') {
-            const d2 = Math.hypot(oppPin.x - current.x, oppPin.y - current.y);
-            if (d1 < d2) addPoint(role);
-            else if (d2 < d1) addPoint(role === 'host' ? 'guest' : 'host');
-          }
-        }
-      }, [myPin, oppPin]);
-
-      const handleMapClick = (e) => {
-        if (myPin || revealed) return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-        setMyPin({ x, y });
-        playTone(500, 'sine', 0.1);
-        sendData({ type: 'GEO_PIN', pin: { x, y } });
-      };
-
-      const nextRound = () => {
-        setMyPin(null);
-        setOppPin(null);
-        setRevealed(false);
-        setRoundIdx(r => r + 1);
-      };
-
-      return (
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl max-w-2xl mx-auto flex flex-col items-center">
-          <div className="text-center mb-4">
-            <span className="text-xs uppercase tracking-widest text-indigo-400 font-bold">Find Location:</span>
-            <h3 className="text-2xl font-bold text-white mt-1">{current.name}</h3>
-            <p className="text-xs text-slate-400 italic">Clue: {current.hint}</p>
-          </div>
-
-          {/* SVG Stylized World Map */}
-          <div 
-            onClick={handleMapClick}
-            className="relative w-full aspect-[2/1] bg-slate-950 rounded-xl border border-slate-800 overflow-hidden cursor-crosshair shadow-2xl"
-          >
-            {/* World Landmass Silhouettes (Stylized coordinates) */}
-            <svg viewBox="0 0 100 50" className="w-full h-full fill-slate-800 stroke-slate-700 stroke-[0.3]">
-              {/* Americas */}
-              <path d="M 15,10 Q 30,8 28,25 Q 35,35 30,45 Q 22,48 20,35 Q 12,20 15,10 Z" />
-              {/* Eurasia & Africa */}
-              <path d="M 45,10 Q 75,5 85,25 Q 75,45 60,42 Q 52,25 45,10 Z" />
-              {/* Australia */}
-              <circle cx="85" cy="38" r="6" />
-            </svg>
-
-            {/* Target Marker */}
-            {revealed && (
-              <div 
-                className="absolute w-4 h-4 bg-emerald-400 rounded-full -translate-x-1/2 -translate-y-1/2 border-2 border-white shadow-lg animate-ping"
-                style={{ left: `${current.x}%`, top: `${current.y}%` }}
-              />
-            )}
-            {revealed && (
-              <div 
-                className="absolute w-4 h-4 bg-emerald-500 rounded-full -translate-x-1/2 -translate-y-1/2 border-2 border-white shadow-lg"
-                style={{ left: `${current.x}%`, top: `${current.y}%` }}
-              />
-            )}
-
-            {/* My Pin */}
-            {myPin && (
-              <div 
-                className="absolute w-3.5 h-3.5 bg-indigo-500 rounded-full -translate-x-1/2 -translate-y-1/2 border-2 border-white"
-                style={{ left: `${myPin.x}%`, top: `${myPin.y}%` }}
-              />
-            )}
-
-            {/* Opponent Pin */}
-            {oppPin && revealed && (
-              <div 
-                className="absolute w-3.5 h-3.5 bg-rose-500 rounded-full -translate-x-1/2 -translate-y-1/2 border-2 border-white"
-                style={{ left: `${oppPin.x}%`, top: `${oppPin.y}%` }}
-              />
-            )}
-          </div>
-
-          <div className="mt-4 text-xs text-slate-400">
-            {!myPin ? "Click the map to place your guess" : !revealed ? "Waiting for opponent guess..." : "Target revealed!"}
-          </div>
-
-          {revealed && (
-            <button 
-              onClick={() => { nextRound(); sendData({ type: 'GEO_NEXT' }); }}
-              className="mt-4 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/30"
-            >
-              Next Landmark
-            </button>
-          )}
-        </div>
-      );
-    }
-
-    // ==========================================
-    // 3. GUESS THE ERA
-    // ==========================================
-    function GuessEra({ role, sendData, connRef, addPoint }) {
-      const [idx, setIdx] = useState(0);
-      const [val, setVal] = useState(1970);
-      const [myGuess, setMyGuess] = useState(null);
-      const [oppGuess, setOppGuess] = useState(null);
-      const [show, setShow] = useState(false);
-
-      const cur = ERA_ROUNDS[idx % ERA_ROUNDS.length];
-
-      useEffect(() => {
-        if (!connRef.current) return;
-        connRef.current.on('data', (d) => {
-          if (d.type === 'ERA_GUESS') setOppGuess(d.year);
-          else if (d.type === 'ERA_NEXT') next();
-        });
-      }, [idx]);
-
-      useEffect(() => {
-        if (myGuess !== null && (role === 'solo' || oppGuess !== null)) {
-          setShow(true);
-          const diff1 = Math.abs(myGuess - cur.year);
-          if (role !== 'solo') {
-            const diff2 = Math.abs(oppGuess - cur.year);
-            if (diff1 < diff2) addPoint(role);
-            else if (diff2 < diff1) addPoint(role === 'host' ? 'guest' : 'host');
-          }
-        }
-      }, [myGuess, oppGuess]);
-
-      const submit = () => {
-        setMyGuess(val);
-        sendData({ type: 'ERA_GUESS', year: val });
-      };
-
-      const next = () => {
-        setMyGuess(null);
-        setOppGuess(null);
-        setShow(false);
-        setIdx(i => i + 1);
-      };
-
-      return (
-        <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-md mx-auto text-center space-y-6">
-          <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Guess the Exact Year</span>
-          <h3 className="text-xl font-bold text-white">{cur.event}</h3>
-
-          <div className="text-5xl font-black font-mono text-indigo-400 py-2">
-            {val}
-          </div>
-
-          {!show ? (
-            <div className="space-y-4">
-              <input 
-                type="range" 
-                min="1850" 
-                max="2025" 
-                value={val} 
-                onChange={(e) => setVal(Number(e.target.value))}
-                className="w-full accent-indigo-500 cursor-pointer"
-              />
-              <button 
-                onClick={submit}
-                disabled={myGuess !== null}
-                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 rounded-xl font-bold transition"
-              >
-                {myGuess !== null ? "Locked in! Waiting..." : "Lock in Guess"}
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800">
-                <div className="text-xs text-slate-500 uppercase">Actual Year</div>
-                <div className="text-4xl font-black text-emerald-400">{cur.year}</div>
-                <div className="text-xs text-slate-400 mt-2">
-                  Your guess was off by <span className="font-bold text-white">{Math.abs(myGuess - cur.year)}</span> years
-                </div>
-              </div>
-              <button 
-                onClick={() => { next(); sendData({ type: 'ERA_NEXT' }); }}
-                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold"
-              >
-                Next Round
-              </button>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // ==========================================
-    // 4. QUICK DRAW
+    // 7. QUICK DRAW
     // ==========================================
     function QuickDraw({ role, sendData, connRef, addPoint }) {
-      const [state, setState] = useState('waiting'); // waiting, ready, fire, finished
+      const [state, setState] = useState('waiting');
       const [winner, setWinner] = useState(null);
       const timerRef = useRef(null);
 
       useEffect(() => {
         if (!connRef.current) return;
         connRef.current.on('data', (d) => {
-          if (d.type === 'QD_FIRE') {
-            setState('fire');
-          } else if (d.type === 'QD_WIN') {
-            setWinner(d.winner);
-            setState('finished');
-          } else if (d.type === 'QD_RESTART') {
-            restart();
-          }
+          if (d.type === 'QD_FIRE') setState('fire');
+          else if (d.type === 'QD_WIN') { setWinner(d.winner); setState('finished'); }
+          else if (d.type === 'QD_RESTART') restart();
         });
       }, []);
 
@@ -742,14 +1419,13 @@
         const delay = 2000 + Math.random() * 3000;
         timerRef.current = setTimeout(() => {
           setState('fire');
-          playTone(800, 'sine', 0.15);
+          playTone(900, 'sine', 0.15);
           sendData({ type: 'QD_FIRE' });
         }, delay);
       };
 
       const handleClick = () => {
         if (state === 'ready') {
-          // False start!
           clearTimeout(timerRef.current);
           const other = role === 'host' ? 'guest' : 'host';
           setWinner(other);
@@ -757,7 +1433,7 @@
           addPoint(other);
           sendData({ type: 'QD_WIN', winner: other });
         } else if (state === 'fire') {
-          playTone(1000, 'square', 0.2);
+          playTone(1100, 'square', 0.2);
           setWinner(role);
           setState('finished');
           addPoint(role);
@@ -773,9 +1449,9 @@
       return (
         <div 
           onClick={handleClick}
-          className={`h-80 rounded-3xl border-2 flex flex-col items-center justify-center cursor-pointer transition select-none ${
+          className={`h-80 rounded-3xl border-2 flex flex-col items-center justify-center cursor-pointer transition select-none shadow-2xl ${
             state === 'fire' 
-              ? 'bg-emerald-500 border-emerald-300 text-slate-950 shadow-2xl shadow-emerald-500/50' 
+              ? 'bg-emerald-500 border-emerald-300 text-slate-950 shadow-emerald-500/50' 
               : state === 'ready' 
               ? 'bg-rose-950/80 border-rose-800 text-rose-300' 
               : 'bg-slate-900 border-slate-800 text-slate-200'
@@ -784,11 +1460,11 @@
           {state === 'waiting' && (
             <div className="text-center space-y-3">
               <div className="text-5xl">⚡</div>
-              <h3 className="text-2xl font-bold">Quick Draw Reflex Duel</h3>
-              <p className="text-xs text-slate-400">Click below to arm your trigger</p>
+              <h3 className="text-2xl font-black">Reflex Quick Draw</h3>
+              <p className="text-xs text-slate-400">Wait for the green light — early click loses!</p>
               <button 
                 onClick={(e) => { e.stopPropagation(); startDuel(); }} 
-                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg"
+                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl shadow-lg"
               >
                 Start Countdown
               </button>
@@ -797,23 +1473,23 @@
 
           {state === 'ready' && (
             <div className="text-center">
-              <h3 className="text-3xl font-black tracking-widest uppercase animate-pulse">STEADY...</h3>
-              <p className="text-xs mt-2 opacity-80">Do NOT click early or you forfeit!</p>
+              <h3 className="text-4xl font-black tracking-widest uppercase animate-pulse">STEADY...</h3>
+              <p className="text-xs mt-2 opacity-80">Do NOT click yet!</p>
             </div>
           )}
 
           {state === 'fire' && (
             <div className="text-center">
-              <h3 className="text-6xl font-black tracking-tighter">CLICK NOW!</h3>
+              <h3 className="text-6xl font-black tracking-tighter">FIRE! 🔥</h3>
             </div>
           )}
 
           {state === 'finished' && (
             <div className="text-center space-y-3">
-              <h3 className="text-3xl font-bold">{winner === role ? "🏆 YOU WON!" : "💥 OPPONENT WON!"}</h3>
+              <h3 className="text-3xl font-black">{winner === role ? "🏆 YOU WON!" : "💥 OPPONENT WAS FASTER!"}</h3>
               <button 
                 onClick={(e) => { e.stopPropagation(); restart(); sendData({ type: 'QD_RESTART' }); }}
-                className="px-6 py-2 bg-slate-950 text-white border border-slate-800 hover:border-slate-700 font-bold rounded-xl"
+                className="px-6 py-2.5 bg-slate-950 text-white border border-slate-800 hover:border-slate-700 font-bold rounded-xl"
               >
                 Rematch
               </button>
@@ -824,21 +1500,100 @@
     }
 
     // ==========================================
-    // 5. TUG OF WAR
+    // 8. WORD SCRAMBLE
+    // ==========================================
+    function WordScramble({ role, sendData, connRef, addPoint }) {
+      const [idx, setIdx] = useState(0);
+      const [input, setInput] = useState('');
+      const [winner, setWinner] = useState(null);
+
+      const cur = SCRAMBLE_WORDS[idx % SCRAMBLE_WORDS.length];
+      const scrambled = cur.word.split('').sort(() => 0.5 - Math.random()).join('');
+
+      useEffect(() => {
+        if (!connRef.current) return;
+        connRef.current.on('data', (d) => {
+          if (d.type === 'SCRAMBLE_WIN') setWinner(d.winner);
+          else if (d.type === 'SCRAMBLE_NEXT') next();
+        });
+      }, [idx]);
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (winner) return;
+        if (input.trim().toUpperCase() === cur.word) {
+          playTone(950, 'sine', 0.2);
+          setWinner(role);
+          addPoint(role);
+          sendData({ type: 'SCRAMBLE_WIN', winner: role });
+        } else {
+          playTone(200, 'sawtooth', 0.1);
+        }
+      };
+
+      const next = () => {
+        setWinner(null);
+        setInput('');
+        setIdx(i => i + 1);
+      };
+
+      return (
+        <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl max-w-md mx-auto text-center space-y-6 shadow-2xl">
+          <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Word #{idx + 1} of {SCRAMBLE_WORDS.length}</span>
+          
+          <div className="p-6 bg-slate-950 rounded-2xl border border-slate-800">
+            <div className="text-4xl font-mono font-black tracking-widest text-emerald-400">{scrambled}</div>
+            <div className="text-xs text-slate-400 mt-3 italic">Hint: {cur.hint}</div>
+          </div>
+
+          {!winner ? (
+            <form onSubmit={handleSubmit} className="flex gap-2">
+              <input 
+                type="text"
+                placeholder="TYPE UNSCRAMBLED WORD..."
+                value={input}
+                onChange={(e) => setInput(e.target.value.toUpperCase())}
+                className="flex-1 bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3.5 font-mono font-bold uppercase focus:outline-none focus:border-indigo-500"
+              />
+              <button 
+                type="submit"
+                className="px-6 bg-indigo-600 hover:bg-indigo-500 font-bold rounded-2xl shadow-lg"
+              >
+                Submit
+              </button>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-xl font-bold text-white">
+                Answer: <span className="text-emerald-400 font-mono font-black">{cur.word}</span>
+              </div>
+              <div className="text-sm font-semibold text-indigo-400">
+                {winner === role ? "🏆 Solved first by you!" : "Opponent unscrambled it first!"}
+              </div>
+              <button 
+                onClick={() => { next(); sendData({ type: 'SCRAMBLE_NEXT' }); }}
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-2xl font-bold shadow-lg"
+              >
+                Next Word →
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 9. TUG OF WAR
     // ==========================================
     function TugOfWar({ role, sendData, connRef, addPoint }) {
-      const [pos, setPos] = useState(0); // -40 (Host wins) to +40 (Guest wins)
+      const [pos, setPos] = useState(0);
       const [winner, setWinner] = useState(null);
 
       useEffect(() => {
         if (!connRef.current) return;
         connRef.current.on('data', (d) => {
-          if (d.type === 'TUG_PULL') {
-            applyPull(d.delta);
-          } else if (d.type === 'TUG_RESET') {
-            setPos(0);
-            setWinner(null);
-          }
+          if (d.type === 'TUG_PULL') applyPull(d.delta);
+          else if (d.type === 'TUG_RESET') { setPos(0); setWinner(null); }
         });
       }, [pos, winner]);
 
@@ -855,7 +1610,7 @@
           }
           return next;
         });
-        playTone(300 + Math.abs(pos) * 5, 'triangle', 0.05);
+        playTone(320 + Math.abs(pos) * 6, 'triangle', 0.05);
       };
 
       const pull = () => {
@@ -866,19 +1621,16 @@
       };
 
       return (
-        <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-lg mx-auto text-center space-y-6">
+        <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl max-w-lg mx-auto text-center space-y-6 shadow-2xl">
           <div>
-            <h3 className="text-2xl font-bold">Button-Mashing Tug of War</h3>
-            <p className="text-xs text-slate-400 mt-1">Mash the pull button as fast as your fingers can move!</p>
+            <h3 className="text-2xl font-black">Button-Mashing Tug of War</h3>
+            <p className="text-xs text-slate-400 mt-1">Mash the button as fast as possible!</p>
           </div>
 
-          {/* Rope Track */}
-          <div className="relative h-12 bg-slate-950 rounded-2xl border border-slate-800 flex items-center px-4 overflow-hidden">
-            {/* Center Line */}
+          <div className="relative h-14 bg-slate-950 rounded-2xl border border-slate-800 flex items-center px-4 overflow-hidden">
             <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-rose-500/50"></div>
-            {/* Knot Indicator */}
             <div 
-              className="absolute w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 shadow-lg shadow-orange-500/50 -translate-x-1/2 transition-all duration-75 flex items-center justify-center font-black text-xs text-slate-950"
+              className="absolute w-9 h-9 rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 shadow-xl shadow-orange-500/50 -translate-x-1/2 transition-all duration-75 flex items-center justify-center font-black text-sm"
               style={{ left: `${50 + pos}%` }}
             >
               🪢
@@ -893,106 +1645,20 @@
           {!winner ? (
             <button 
               onClick={pull}
-              className="w-full py-8 bg-gradient-to-r from-indigo-600 to-indigo-500 active:scale-95 text-2xl font-black rounded-2xl shadow-xl shadow-indigo-600/30 uppercase tracking-widest transition select-none"
+              className="w-full py-8 bg-gradient-to-r from-indigo-600 to-indigo-500 active:scale-95 text-3xl font-black rounded-3xl shadow-xl shadow-indigo-600/30 uppercase tracking-widest transition select-none"
             >
               PULL! 💥
             </button>
           ) : (
             <div className="space-y-4">
-              <div className="text-2xl font-bold text-emerald-400">
-                {winner.toUpperCase()} PULLED THE VICTORY!
+              <div className="text-2xl font-black text-emerald-400">
+                {winner.toUpperCase()} PULLED THE WIN!
               </div>
               <button 
                 onClick={() => { setPos(0); setWinner(null); sendData({ type: 'TUG_RESET' }); }}
-                className="px-6 py-2.5 bg-indigo-600 rounded-xl font-bold text-sm"
+                className="px-6 py-2.5 bg-indigo-600 rounded-xl font-bold text-sm shadow-lg"
               >
                 Rematch
-              </button>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // ==========================================
-    // 6. WORD SCRAMBLE
-    // ==========================================
-    function WordScramble({ role, sendData, connRef, addPoint }) {
-      const [idx, setIdx] = useState(0);
-      const [input, setInput] = useState('');
-      const [winner, setWinner] = useState(null);
-
-      const cur = SCRAMBLE_WORDS[idx % SCRAMBLE_WORDS.length];
-      const scrambled = cur.word.split('').sort(() => 0.5 - Math.random()).join('');
-
-      useEffect(() => {
-        if (!connRef.current) return;
-        connRef.current.on('data', (d) => {
-          if (d.type === 'SCRAMBLE_WIN') {
-            setWinner(d.winner);
-          } else if (d.type === 'SCRAMBLE_NEXT') {
-            next();
-          }
-        });
-      }, [idx]);
-
-      const handleSubmit = (e) => {
-        e.preventDefault();
-        if (winner) return;
-        if (input.trim().toUpperCase() === cur.word) {
-          playTone(900, 'sine', 0.2);
-          setWinner(role);
-          addPoint(role);
-          sendData({ type: 'SCRAMBLE_WIN', winner: role });
-        } else {
-          playTone(200, 'sawtooth', 0.1);
-        }
-      };
-
-      const next = () => {
-        setWinner(null);
-        setInput('');
-        setIdx(i => i + 1);
-      };
-
-      return (
-        <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-md mx-auto text-center space-y-6">
-          <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Office Word Scramble</span>
-          
-          <div className="p-6 bg-slate-950 rounded-2xl border border-slate-800">
-            <div className="text-4xl font-mono font-black tracking-widest text-emerald-400">{scrambled}</div>
-            <div className="text-xs text-slate-400 mt-3 italic">Hint: {cur.hint}</div>
-          </div>
-
-          {!winner ? (
-            <form onSubmit={handleSubmit} className="flex gap-2">
-              <input 
-                type="text"
-                placeholder="TYPE UNSCRAMBLED WORD..."
-                value={input}
-                onChange={(e) => setInput(e.target.value.toUpperCase())}
-                className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 font-mono font-bold uppercase focus:outline-none focus:border-indigo-500"
-              />
-              <button 
-                type="submit"
-                className="px-6 bg-indigo-600 hover:bg-indigo-500 font-bold rounded-xl"
-              >
-                Submit
-              </button>
-            </form>
-          ) : (
-            <div className="space-y-4">
-              <div className="text-xl font-bold text-white">
-                Answer: <span className="text-emerald-400 font-mono">{cur.word}</span>
-              </div>
-              <div className="text-sm font-semibold text-indigo-400">
-                {winner === role ? "You solved it first!" : "Opponent solved it!"}
-              </div>
-              <button 
-                onClick={() => { next(); sendData({ type: 'SCRAMBLE_NEXT' }); }}
-                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold"
-              >
-                Next Word
               </button>
             </div>
           )}
