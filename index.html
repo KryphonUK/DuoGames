@@ -53,7 +53,7 @@
     }
 
     // ==========================================
-    // 1. 50 GEOGUESS LANDMARKS (Accurate Coordinates)
+    // 1. 50 GEOGUESS LANDMARKS
     // ==========================================
     const GEO_ROUNDS = [
       { name: "Statue of Liberty (New York)", x: 29.4, y: 27.4, hint: "East Coast harbor, USA" },
@@ -109,7 +109,173 @@
     ];
 
     // ==========================================
-    // 2. 20 COMBAT AIRCRAFT (With High-Res Photos)
+    // 2. 20 MILITARY CAMOUFLAGE PATTERNS (Anti-Spoiler + Vector Camo Shaders)
+    // ==========================================
+    const CAMO_ROUNDS = [
+      {
+        pattern: "CADPAT (Temperate Woodland)",
+        nation: "Canada",
+        style: "digital",
+        colors: ["#2d401e", "#1b2913", "#45331e", "#141414"],
+        clue: "The world's first operational computerized digital camouflage system using mathematically spaced micro-pixels.",
+        options: ["Canada", "Norway", "Denmark", "Australia"]
+      },
+      {
+        pattern: "Flecktarn",
+        nation: "Germany (Bundeswehr)",
+        style: "dots",
+        colors: ["#3d4722", "#242d17", "#6e3a1f", "#111111"],
+        clue: "5-color disruptive pea-dot pattern (dark green, light green, black, red-brown, olive).",
+        options: ["Germany (Bundeswehr)", "Switzerland", "Austria", "Netherlands"]
+      },
+      {
+        pattern: "M81 Woodland",
+        nation: "United States (1981-2000s)",
+        style: "organic",
+        colors: ["#8f7e5b", "#3e5229", "#3b271b", "#141414"],
+        clue: "High-contrast 4-color pattern (sand, brown, green, black) copied by dozens of nations worldwide.",
+        options: ["United States (1981-2000s)", "France", "Spain", "Poland"]
+      },
+      {
+        pattern: "MARPAT",
+        nation: "United States Marine Corps",
+        style: "digital",
+        colors: ["#7a6345", "#475225", "#2e3b20", "#181816"],
+        clue: "Digital pixelated camouflage containing tiny embedded branch insignias, issued to naval infantry.",
+        options: ["United States Marine Corps", "British Royal Marines", "Russian VDV", "French Foreign Legion"]
+      },
+      {
+        pattern: "M90 Splinter",
+        nation: "Sweden",
+        style: "geometric",
+        colors: ["#3b6b35", "#183015", "#1d2420", "#7f8a6c"],
+        clue: "Distinct hard-edged geometric polygon camouflage designed for Nordic pine forests and tundra.",
+        options: ["Sweden", "Finland", "Estonia", "Japan"]
+      },
+      {
+        pattern: "Tigerstripe",
+        nation: "Vietnam War (US Special Forces)",
+        style: "stripes",
+        colors: ["#445426", "#7d7857", "#121212", "#273315"],
+        clue: "Dense horizontal interlocking brushstrokes developed for close-quarters jungle warfare.",
+        options: ["Vietnam War (US Special Forces)", "Rhodesian SAS", "Cuban Troops", "Korean Marines"]
+      },
+      {
+        pattern: "Alpenflage (TAZ 57)",
+        nation: "Switzerland",
+        style: "alpen",
+        colors: ["#b53b2a", "#344724", "#261d15", "#c7ba9f"],
+        clue: "High-contrast alpine pattern with distinctive bright red/orange patches to blend with mountain scree.",
+        options: ["Switzerland", "Italy", "Austria", "Czech Republic"]
+      },
+      {
+        pattern: "Desert DPM",
+        nation: "United Kingdom",
+        style: "stripes",
+        colors: ["#c7b380", "#5c3316", "#a89467", "#381f0d"],
+        clue: "Brushstroke desert camouflage issued in 2-colour and 4-colour Gulf War configurations.",
+        options: ["United Kingdom", "Saudi Arabia", "South Africa", "Jordan"]
+      },
+      {
+        pattern: "MultiCam",
+        nation: "USA / International Special Ops",
+        style: "multicam",
+        colors: ["#82785d", "#5b6643", "#3d3023", "#9da37e"],
+        clue: "7-color gradient pattern blending browns, khakis, and lime greens across diverse environments.",
+        options: ["USA / International Special Ops", "Russia", "Sweden", "Israel"]
+      },
+      {
+        pattern: "EMR / Digital Flora",
+        nation: "Russian Armed Forces",
+        style: "digital",
+        colors: ["#1c2914", "#2a3d1c", "#101a0b", "#3b4f26"],
+        clue: "Dense micro-pixelated dark green and black camouflage introduced with the modern Ratnik combat system.",
+        options: ["Russian Armed Forces", "Ukraine", "Belarus", "Kazakhstan"]
+      },
+      {
+        pattern: "Auscam / DPCU",
+        nation: "Australia",
+        style: "dots",
+        colors: ["#8f7a4e", "#495b2d", "#362719", "#5e7339"],
+        clue: "Nicknamed 'Jellybean Camo' due to its rounded green, tan, and brown amorphous blob shapes.",
+        options: ["Australia", "New Zealand", "Fiji", "Singapore"]
+      },
+      {
+        pattern: "CCE (Camouflage Centre-Europe)",
+        nation: "France",
+        style: "organic",
+        colors: ["#7a6c50", "#384725", "#2e2117", "#111111"],
+        clue: "Four-color woodland pattern with thick horizontal stripes issued across European and Foreign Legion units.",
+        options: ["France", "Belgium", "Portugal", "Romania"]
+      },
+      {
+        pattern: "Rhodesian Brushstroke",
+        nation: "Rhodesian Security Forces",
+        style: "stripes",
+        colors: ["#8c7c56", "#2d3d1e", "#382414", "#706342"],
+        clue: "Distinctive diagonal coarse brushstrokes in dark green and brown over light khaki; iconic bush warfare pattern.",
+        options: ["Rhodesian Security Forces", "South Africa", "Kenya", "Namibia"]
+      },
+      {
+        pattern: "Jigsaw Camouflage",
+        nation: "Belgium",
+        style: "organic",
+        colors: ["#807753", "#364a27", "#6b331f", "#141414"],
+        clue: "Interlocking puzzle-piece shapes in khaki, dark green, and reddish-brown; standard issue for 60+ years.",
+        options: ["Belgium", "Netherlands", "Luxembourg", "Denmark"]
+      },
+      {
+        pattern: "M05 Military Pattern",
+        nation: "Finland (Finnish Defence Forces)",
+        style: "digital",
+        colors: ["#2d401e", "#1b2913", "#3d3023", "#0d140a"],
+        clue: "Scientifically sampled Scandinavian forest foliage digitally rendered into 4-color micro clusters.",
+        options: ["Finland (Finnish Defence Forces)", "Sweden", "Norway", "Latvia"]
+      },
+      {
+        pattern: "Desert Night Camo (DNC)",
+        nation: "United States (Gulf War)",
+        style: "grid",
+        colors: ["#2a3b1f", "#1b2614", "#384d28", "#111a0c"],
+        clue: "Dark green two-color grid pattern with tiny spots intended to disrupt Soviet-era night vision optics.",
+        options: ["United States (Gulf War)", "Israel", "Saudi Arabia", "Kuwait"]
+      },
+      {
+        pattern: "Wz. 93 Pantera",
+        nation: "Poland (Polish Armed Forces)",
+        style: "dots",
+        colors: ["#54613c", "#333d22", "#423120", "#181f11"],
+        clue: "Greenish-brown amorphous amoeba spots on a pale olive-green backdrop, standard for Land Forces.",
+        options: ["Poland (Polish Armed Forces)", "Czech Republic", "Slovakia", "Hungary"]
+      },
+      {
+        pattern: "Greek Lizard",
+        nation: "Greece (Hellenic Armed Forces)",
+        style: "stripes",
+        colors: ["#665e43", "#2c3b1d", "#402e1c", "#1c2612"],
+        clue: "Horizontal brushstrokes derivative of TAP 47 lizard pattern, optimized for Mediterranean rocky brush.",
+        options: ["Greece (Hellenic Armed Forces)", "Turkey", "Cyprus", "Italy"]
+      },
+      {
+        pattern: "Taz 90",
+        nation: "Switzerland (Modern Swiss Armed Forces)",
+        style: "organic",
+        colors: ["#635c43", "#344522", "#38291e", "#141414"],
+        clue: "Modern 4-color woodland variant that replaced the red-tinted mountain camouflage across canton units.",
+        options: ["Switzerland (Modern Swiss Armed Forces)", "Germany", "Austria", "Liechtenstein"]
+      },
+      {
+        pattern: "Mitchell Pattern / Cloud",
+        nation: "United States (USMC Vietnam Era)",
+        style: "organic",
+        colors: ["#5e6938", "#8c7348", "#2c3619", "#3b2b1b"],
+        clue: "Reversible helmet cover pattern featuring lush overlapping green leaves on one side and brown clouds on reverse.",
+        options: ["United States (USMC Vietnam Era)", "South Korea", "Philippines", "Australia"]
+      }
+    ];
+
+    // ==========================================
+    // 3. 20 COMBAT AIRCRAFT (Anti-Spoiler + Vector Schematics)
     // ==========================================
     const AIRCRAFT_ROUNDS = [
       {
@@ -117,7 +283,6 @@
         origin: "USA",
         role: "Close Air Support & Tank Buster",
         spec: "Armed with 30mm GAU-8/A Avenger rotary cannon firing depleted uranium rounds; straight high-lift wings.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/A-10_Thunderbolt_II.jpg?width=700",
         options: ["A-10 Thunderbolt II", "Su-25 Frogfoot", "F-16 Fighting Falcon", "AV-8B Harrier II"]
       },
       {
@@ -125,7 +290,6 @@
         origin: "USA (Skunk Works)",
         role: "Strategic Reconnaissance",
         spec: "Capable of Mach 3.3+ and cruising above 85,000 feet; constructed primarily from heat-resistant titanium.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Lockheed_SR-71_Blackbird.jpg?width=700",
         options: ["SR-71 Blackbird", "U-2 Dragon Lady", "MiG-25 Foxbat", "XB-70 Valkyrie"]
       },
       {
@@ -133,7 +297,6 @@
         origin: "USA",
         role: "Stealth Strategic Heavy Bomber",
         spec: "Flying-wing design with continuous-curvature radar absorption skin and zero vertical tail fins.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/B-2_Spirit_original.jpg?width=700",
         options: ["B-2 Spirit", "B-21 Raider", "F-117 Nighthawk", "B-52 Stratofortress"]
       },
       {
@@ -141,7 +304,6 @@
         origin: "USA",
         role: "5th-Gen Air Superiority Fighter",
         spec: "Supercruise without afterburners, 2D thrust vectoring nozzles, all-aspect stealth shaping.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/F-22_Raptor_edit1.jpg?width=700",
         options: ["F-22 Raptor", "F-35 Lightning II", "Su-57 Felon", "J-20 Mighty Dragon"]
       },
       {
@@ -149,7 +311,6 @@
         origin: "United Kingdom",
         role: "WWII Interceptor Fighter",
         spec: "Famed elliptical wings, Rolls-Royce Merlin V12 liquid-cooled engine, hero of the Battle of Britain.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Spitfire_F.R_MK_XIV.jpg?width=700",
         options: ["Supermarine Spitfire", "Hawker Hurricane", "Messerschmitt Bf 109", "P-51 Mustang"]
       },
       {
@@ -157,7 +318,6 @@
         origin: "USA",
         role: "Carrier-based Supersonic Interceptor",
         spec: "Variable-sweep 'swing wings', twin vertical tails, long-range AIM-54 Phoenix missile carrier.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/F-14A_Tomcat_VF-142.jpg?width=700",
         options: ["F-14 Tomcat", "F/A-18 Hornet", "Tornado ADV", "MiG-23 Flogger"]
       },
       {
@@ -165,7 +325,6 @@
         origin: "USA / Allied Consortium",
         role: "5th-Gen Multi-Role Stealth Fighter",
         spec: "Electro-optical targeting system, helmet-mounted 360-degree vision, STOVL 'B' variant.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/F-35A_flight_(cropped).jpg?width=700",
         options: ["F-35 Lightning II", "F-22 Raptor", "Su-75 Checkmate", "Gripen E"]
       },
       {
@@ -173,7 +332,6 @@
         origin: "USA",
         role: "Long-Range Strategic Heavy Bomber",
         spec: "Eight turbojet engines mounted in four underwing pods; continuous frontline service since the 1950s.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/B-52H_Stratofortress_in_flight_(9591603).jpg?width=700",
         options: ["B-52 Stratofortress", "Tu-95 Bear", "B-1B Lancer", "Vulcan B.2"]
       },
       {
@@ -181,7 +339,6 @@
         origin: "USA",
         role: "Heavy Attack Helicopter",
         spec: "Twin turboshafts, nose-mounted M230 30mm chain gun, AGM-114 Hellfire laser-guided missiles.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Apache_helicopter_in_flight.jpg?width=700",
         options: ["AH-64 Apache", "Ka-52 Alligator", "Mi-24 Hind", "Eurocopter Tiger"]
       },
       {
@@ -189,7 +346,6 @@
         origin: "USA (Lockheed Skunk Works)",
         role: "Stealth Ground Attack Aircraft",
         spec: "Faceted flat surface panels designed to scatter radar waves; nickname 'The Hopeless Diamond'.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/F-117_Nighthawk_Front.jpg?width=700",
         options: ["F-117 Nighthawk", "B-2 Spirit", "A-12 Avenger II", "YF-23 Black Widow"]
       },
       {
@@ -197,7 +353,6 @@
         origin: "USA",
         role: "Long-Range WWII Escort Fighter",
         spec: "Laminar flow wing and bubble canopy, fitted with Rolls-Royce Merlin engine to escort Allied bombers.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/P-51_Mustang_fighter_in_flight,_Inglewood,_Calif._1a35324v.jpg?width=700",
         options: ["P-51 Mustang", "P-47 Thunderbolt", "P-38 Lightning", "Corsair F4U"]
       },
       {
@@ -205,7 +360,6 @@
         origin: "UK / Germany / Italy / Spain",
         role: "Multirole Canard-Delta Fighter",
         spec: "Foreplane canards, delta wings, twin Eurojet EJ200 engines, high-agility dogfighter.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Eurofighter_9803_2.jpg?width=700",
         options: ["Eurofighter Typhoon", "Dassault Rafale", "Saab JAS 39 Gripen", "Mirage 2000"]
       },
       {
@@ -213,7 +367,6 @@
         origin: "USA",
         role: "Heavy Ground Support Attack Aircraft",
         spec: "Side-firing heavy armament including a 105mm M102 howitzer and 40mm cannons.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Lockheed_AC-130H_Hercules_USAF.jpg?width=700",
         options: ["AC-130 Gunship", "C-17 Globemaster", "An-124 Ruslan", "KC-135 Stratotanker"]
       },
       {
@@ -221,7 +374,6 @@
         origin: "USA",
         role: "All-Weather Tactical Air Superiority",
         spec: "Twin Pratt & Whitney turbofans, legendary combat air-to-air record of over 104 kills to 0 losses.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/F-15_Eagle_in_flight.jpg?width=700",
         options: ["F-15 Eagle", "F-16 Falcon", "F-4 Phantom II", "Su-27 Flanker"]
       },
       {
@@ -229,7 +381,6 @@
         origin: "Germany",
         role: "WWII Fighter & Interceptor",
         spec: "Daimler-Benz inverted-V12 liquid-cooled engine, narrow-track gear, backbone of the Luftwaffe.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Messerschmitt_Bf_109G-6.jpg?width=700",
         options: ["Messerschmitt Bf 109", "Focke-Wulf Fw 190", "Heinkel He 112", "Macchi C.202"]
       },
       {
@@ -237,7 +388,6 @@
         origin: "USA",
         role: "Ultra-High Altitude Reconnaissance",
         spec: "Glider-like ultra-long wingspan operating at 70,000+ feet; pilot wears full astronaut pressure suit.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Usaf.u2.750pix.jpg?width=700",
         options: ["U-2 Dragon Lady", "SR-71 Blackbird", "Canberra PR.9", "WB-57F"]
       },
       {
@@ -245,7 +395,6 @@
         origin: "France",
         role: "Omnirole Combat Aircraft",
         spec: "Canard delta wing, Snecma M88 engines, Spectra electronic warfare suite; carrier catapult capable.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Dassault_Rafale_C_in_flight.jpg?width=700",
         options: ["Dassault Rafale", "Mirage 2000", "Eurofighter Typhoon", "JAS 39 Gripen"]
       },
       {
@@ -253,7 +402,6 @@
         origin: "Soviet Union",
         role: "Air Superiority / Tactical Fighter",
         spec: "Dual widely-spaced Klimov RD-33 turbofans, leading-edge root extensions, helmet-mounted missile sight.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/MiG-29_in_flight.jpg?width=700",
         options: ["MiG-29 Fulcrum", "Su-27 Flanker", "MiG-25 Foxbat", "MiG-21 Fishbed"]
       },
       {
@@ -261,7 +409,6 @@
         origin: "United Kingdom / USA",
         role: "V/STOL Jump Jet Strike Aircraft",
         spec: "Pegasus vectored-thrust engine with four rotating exhaust nozzles enabling hover and vertical landings.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/AV-8B_Harrier_II_in_flight.jpg?width=700",
         options: ["AV-8B Harrier II", "Yak-38 Forger", "F-35B Lightning", "Mirage IIIV"]
       },
       {
@@ -269,13 +416,12 @@
         origin: "Russia",
         role: "5th-Gen Multirole Stealth Fighter",
         spec: "Blended wing-body fuselage with 3D thrust-vectoring Saturn engines and internal weapons bays.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Sukhoi_Su-57_in_flight.jpg?width=700",
         options: ["Su-57 Felon", "MiG-35 Fulcrum", "Su-35 Flanker-E", "J-20 Mighty Dragon"]
       }
     ];
 
     // ==========================================
-    // 3. 20 FIREARMS & RIFLES (With High-Res Photos)
+    // 4. 20 FIREARMS & RIFLES (Anti-Spoiler + Vector Schematics)
     // ==========================================
     const WEAPON_ROUNDS = [
       {
@@ -283,7 +429,6 @@
         origin: "Soviet Union",
         caliber: "7.62x39mm",
         spec: "Long-stroke gas piston, rotating bolt, stamped receiver, curved steel magazine, legendary reliability in mud and sand.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/AK-47_type_II_noBG.png?width=700",
         options: ["AK-47 / AKM", "Type 56", "Galil", "SKS"]
       },
       {
@@ -291,7 +436,6 @@
         origin: "USA",
         caliber: "5.56x45mm NATO",
         spec: "Direct impingement gas system, collapsible stock, Picatinny flat-top upper receiver; standard frontline US infantry carbine.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/M4a1.jpg?width=700",
         options: ["M4A1 Carbine", "HK416", "FN SCAR-L", "SIG MCX"]
       },
       {
@@ -299,7 +443,6 @@
         origin: "Austria",
         caliber: "5.56x45mm NATO",
         spec: "Pioneering bullpup configuration with firing action behind trigger, translucent magazine, and integrated optical scope.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Steyr_AUG_A1_and_AG-C.jpg?width=700",
         options: ["Steyr AUG", "FAMAS F1", "SA80 / L85A2", "TAR-21 Tavor"]
       },
       {
@@ -307,7 +450,6 @@
         origin: "Belgium",
         caliber: "5.7x28mm Armor-Piercing",
         spec: "Compact ambidextrous PDW with unique horizontal top-mounted 50-round translucent magazine and downward ejection.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/P90_Official_No_Bg.png?width=700",
         options: ["FN P90", "MP7", "PP-19 Bizon", "Uzi"]
       },
       {
@@ -315,7 +457,6 @@
         origin: "USA",
         caliber: ".50 BMG (12.7x99mm)",
         spec: "Semi-automatic anti-materiel sniper rifle with short-recoil operation, fluted barrel, and arrowhead dual-chamber brake.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Barrett_M82.jpg?width=700",
         options: ["Barrett M82", "Accuracy International AX50", "CheyTac M200 Intervention", "McMillan TAC-50"]
       },
       {
@@ -323,7 +464,6 @@
         origin: "Germany",
         caliber: "9x19mm Parabellum",
         spec: "Roller-delayed blowback closed-bolt submachine gun favored worldwide by British SAS, GSG 9, and SWAT tactical units.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/HK_MP5_noBG.png?width=700",
         options: ["HK MP5", "CZ Scorpion Evo", "MAC-10", "Beretta M12"]
       },
       {
@@ -331,7 +471,6 @@
         origin: "Germany",
         caliber: "7.92x57mm Mauser",
         spec: "Controlled-feed bolt-action military service rifle with internal 5-round stripper clip magazine; standard WWII infantry arm.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Mauser_Kar._98k_hunting_rifle.jpg?width=700",
         options: ["Karabiner 98k", "Mosin-Nagant", "Lee-Enfield No. 4", "Springfield M1903"]
       },
       {
@@ -339,7 +478,6 @@
         origin: "Belgium / USA",
         caliber: "7.62x51mm NATO (.308)",
         spec: "Short-stroke gas piston battle rifle featuring monolithic aluminum receiver, reciprocating handle, and folding modular stock.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/SCAR-H_EP.jpg?width=700",
         options: ["FN SCAR-H", "HK G3", "M14 / EBR", "Galil ACE 32"]
       },
       {
@@ -347,7 +485,6 @@
         origin: "United Kingdom",
         caliber: "5.56x45mm NATO",
         spec: "British Armed Forces standard issue bullpup rifle; modernized with German Heckler & Koch internals and SUSAT/ACOG optics.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/SA80_A2_(L85A2)_5.56mm_Rifle_MOD_45162154.jpg?width=700",
         options: ["SA80 / L85A2", "FAMAS F1", "Steyr AUG", "QBZ-95"]
       },
       {
@@ -355,7 +492,6 @@
         origin: "France",
         caliber: "5.56x45mm NATO",
         spec: "Lever-delayed blowback bullpup rifle nicknamed 'Le Clairon' (The Bugle) due to its elevated top carry handle.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/FAMAS_F1.png?width=700",
         options: ["FAMAS F1", "VHS-2", "Steyr AUG", "SA80 / L85A2"]
       },
       {
@@ -363,7 +499,6 @@
         origin: "Soviet Union",
         caliber: "7.62x54mmR",
         spec: "Semi-automatic designated marksman rifle featuring skeletonized wooden thumbhole stock and side-mounted PSO-1 scope.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/SVD_Dragunov_sniper_rifle.jpg?width=700",
         options: ["Dragunov SVD", "PSL", "Zastava M76", "M21 SWS"]
       },
       {
@@ -371,7 +506,6 @@
         origin: "USA",
         caliber: ".30-06 Springfield",
         spec: "First semi-automatic rifle standard-issued to infantry; renowned for metallic 'ping' sound when en-bloc clip ejects.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/M1_Garand_rifle_cartridge.png?width=700",
         options: ["M1 Garand", "M1 Carbine", "SVT-40", "Gewehr 43"]
       },
       {
@@ -379,7 +513,6 @@
         origin: "Germany",
         caliber: "7.62x51mm NATO",
         spec: "Cold War battle rifle utilizing roller-delayed blowback mechanism and fluted chamber; served with 40+ nations.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Gewehr_G3A3.jpg?width=700",
         options: ["HK G3", "FN FAL", "CETME Model C", "SIG SG 510"]
       },
       {
@@ -387,7 +520,6 @@
         origin: "Belgium",
         caliber: "7.62x51mm NATO",
         spec: "Short-stroke gas-operated battle rifle widely nicknamed 'The Right Arm of the Free World' during the Cold War.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/FN_FAL.png?width=700",
         options: ["FN FAL", "HK G3", "M14", "AR-10"]
       },
       {
@@ -395,7 +527,6 @@
         origin: "USA",
         caliber: ".45 ACP / 9mm",
         spec: "Futuristic submachine gun utilizing Super V articulated mechanism that redirects recoil energy downward.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Kriss_Vector_CRB.png?width=700",
         options: ["Kriss Vector", "UMP-45", "PP-19 Vityaz", "APC9"]
       },
       {
@@ -403,7 +534,6 @@
         origin: "Italy",
         caliber: "12 Gauge Shotgun",
         spec: "Auto-regulating gas-operated (ARGO) semi-automatic combat shotgun adopted by the United States Marine Corps.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Benelli_M4.jpg?width=700",
         options: ["Benelli M4 (M1014)", "SPAS-12", "Mossberg 590A1", "Remington 870"]
       },
       {
@@ -411,7 +541,6 @@
         origin: "USA",
         caliber: ".45 ACP",
         spec: "Blowback SMG with finned barrel, Cutts compensator, and 50-round drum magazine; nicknamed 'Tommy Gun'.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Thompson_submachine_gun.jpg?width=700",
         options: ["Thompson Submachine Gun", "M3 Grease Gun", "Sten Gun", "PPSh-41"]
       },
       {
@@ -419,7 +548,6 @@
         origin: "Soviet Union",
         caliber: "7.62x25mm Tokarev",
         spec: "Mass-produced stamped sheet-metal WWII submachine gun firing at 1,000 rounds/min, often paired with a 71-round drum.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/PPSh-41.png?width=700",
         options: ["PPSh-41", "PPS-43", "Suomi KP/-31", "MP 40"]
       },
       {
@@ -427,7 +555,6 @@
         origin: "USA",
         caliber: ".408 CheyTac",
         spec: "Extreme long-range bolt-action sniper rifle system engineered for precision sub-MOA groupings past 2,500 yards.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/CheyTac_M200_Intervention.jpg?width=700",
         options: ["CheyTac M200 Intervention", "Barrett M82", "AI Arctic Warfare", "DSR-1"]
       },
       {
@@ -435,154 +562,7 @@
         origin: "USA / Israel",
         caliber: ".50 Action Express",
         spec: "Gas-operated rotating-bolt magnum hand cannon with triangular barrel slide, popular in cinema and gaming lore.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Desert_Eagle_50_AE.jpg?width=700",
         options: ["Desert Eagle", "AutoMag", "S&W 500", "Colt Anaconda"]
-      }
-    ];
-
-    // ==========================================
-    // 4. 20 CAMOUFLAGE PATTERNS (With High-Res Swatches)
-    // ==========================================
-    const CAMO_ROUNDS = [
-      {
-        pattern: "Flecktarn",
-        nation: "Germany (Bundeswehr)",
-        clue: "5-color disruptive pea-dot pattern (dark green, light green, black, red-brown, olive).",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Flecktarn_(cropped).jpg?width=700",
-        options: ["Germany (Bundeswehr)", "Switzerland", "Austria", "Netherlands"]
-      },
-      {
-        pattern: "MultiCam",
-        nation: "USA / International Special Ops",
-        clue: "7-color gradient pattern blending browns, khakis, and lime greens across diverse terrain.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Multicam_pattern_(cropped).jpg?width=700",
-        options: ["USA / International Special Ops", "Russia", "Sweden", "Israel"]
-      },
-      {
-        pattern: "M81 Woodland",
-        nation: "United States (1981-2000s)",
-        clue: "High-contrast 4-color pattern (sand, brown, green, black) copied by dozens of nations worldwide.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/M81_Woodland_Camoflauge_Pattern_BDU.jpg?width=700",
-        options: ["United States (1981-2000s)", "France", "Spain", "Poland"]
-      },
-      {
-        pattern: "MARPAT (Marine Pattern)",
-        nation: "United States Marine Corps",
-        clue: "Digital pixelated camouflage containing tiny embedded Eagle, Globe, and Anchor emblems.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/MARPAT_desert_camouflage_swatch,_24.55%22.jpg?width=700",
-        options: ["United States Marine Corps", "British Royal Marines", "Russian VDV", "French Foreign Legion"]
-      },
-      {
-        pattern: "CADPAT (Canadian Disruptive Pattern)",
-        nation: "Canada",
-        clue: "The world's first operational computerized digital camouflage system using mathematically spaced pixels.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/CADPAT_woodland_sample.jpg?width=700",
-        options: ["Canada", "Norway", "Denmark", "Australia"]
-      },
-      {
-        pattern: "Desert DPM (Disruptive Pattern Material)",
-        nation: "United Kingdom",
-        clue: "British Army brushstroke camouflage issued in 2-colour and 4-colour Gulf War configurations.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/DPM_desert.jpg?width=700",
-        options: ["United Kingdom", "Saudi Arabia", "South Africa", "Jordan"]
-      },
-      {
-        pattern: "M90 Splinter",
-        nation: "Sweden",
-        clue: "Distinct hard-edged geometric polygon camouflage designed for Nordic forests and tundra.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/M90_camo.jpg?width=700",
-        options: ["Sweden", "Finland", "Estonia", "Japan"]
-      },
-      {
-        pattern: "Tigerstripe",
-        nation: "Vietnam War (US Special Forces)",
-        clue: "Dense horizontal interlocking brushstrokes developed for close-quarters jungle warfare.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Tigerstripe_camo.jpg?width=700",
-        options: ["Vietnam War (US Special Forces)", "Rhodesian SAS", "Cuban Troops", "Korean Marines"]
-      },
-      {
-        pattern: "Alpenflage (TAZ 57)",
-        nation: "Switzerland",
-        clue: "High-contrast alpine pattern with distinctive bright red/orange patches to blend with mountain scree.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Tarnanzug_57_alpenflage.jpg?width=700",
-        options: ["Switzerland", "Italy", "Austria", "Czech Republic"]
-      },
-      {
-        pattern: "EMR / Digital Flora",
-        nation: "Russian Armed Forces",
-        clue: "Dense micro-pixelated dark green and black camouflage introduced with the Ratnik combat equipment system.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/EMR_camo_sample.jpg?width=700",
-        options: ["Russian Armed Forces", "Ukraine", "Belarus", "Kazakhstan"]
-      },
-      {
-        pattern: "Auscam / DPCU",
-        nation: "Australia",
-        clue: "Nicknamed 'Jellybean Camo' due to its rounded green, tan, and brown amorphous blob shapes.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/DPCU_camo.jpg?width=700",
-        options: ["Australia", "New Zealand", "Fiji", "Singapore"]
-      },
-      {
-        pattern: "CCE (Camouflage Centre-Europe)",
-        nation: "France",
-        clue: "Four-color woodland pattern with thick horizontal stripes issued across the French Army and Foreign Legion.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/CCE_camo.jpg?width=700",
-        options: ["France", "Belgium", "Portugal", "Romania"]
-      },
-      {
-        pattern: "Rhodesian Brushstroke",
-        nation: "Rhodesian Security Forces",
-        clue: "Distinctive diagonal coarse brushstrokes in dark green and brown over light khaki; iconic bush warfare pattern.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Rhodesian_brushstroke_camo.jpg?width=700",
-        options: ["Rhodesian Security Forces", "South Africa", "Kenya", "Namibia"]
-      },
-      {
-        pattern: "Jigsaw Camouflage",
-        nation: "Belgium",
-        clue: "Interlocking puzzle-piece shapes in khaki, dark green, and reddish-brown; standard issue for 60+ years.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Belgian_Jigsaw_camo.jpg?width=700",
-        options: ["Belgium", "Netherlands", "Luxembourg", "Denmark"]
-      },
-      {
-        pattern: "M05 Military Pattern",
-        nation: "Finland (Finnish Defence Forces)",
-        clue: "Scientifically sampled Finnish forest foliage digitally rendered into 4-color micro and macro clusters.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Finnish_M05_woodland.jpg?width=700",
-        options: ["Finland (Finnish Defence Forces)", "Sweden", "Norway", "Latvia"]
-      },
-      {
-        pattern: "Desert Night Camo (DNC)",
-        nation: "United States (Gulf War)",
-        clue: "Dark green two-color grid pattern with tiny spots intended to disrupt Soviet-era night vision optics.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/DNC_pattern.jpg?width=700",
-        options: ["United States (Gulf War)", "Israel", "Saudi Arabia", "Kuwait"]
-      },
-      {
-        pattern: "Wz. 93 Pantera",
-        nation: "Poland (Polish Armed Forces)",
-        clue: "Greenish-brown amorphous amoeba spots on a pale olive-green backdrop, standard for Polish Land Forces.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/WZ.93_Pantera.jpg?width=700",
-        options: ["Poland (Polish Armed Forces)", "Czech Republic", "Slovakia", "Hungary"]
-      },
-      {
-        pattern: "Greek Lizard",
-        nation: "Greece (Hellenic Armed Forces)",
-        clue: "Horizontal brushstrokes derivative of French TAP 47 lizard pattern, optimized for Mediterranean rocky brush.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Greek_lizard_camo.jpg?width=700",
-        options: ["Greece (Hellenic Armed Forces)", "Turkey", "Cyprus", "Italy"]
-      },
-      {
-        pattern: "Taz 90",
-        nation: "Switzerland (Modern Swiss Armed Forces)",
-        clue: "Modern 4-color woodland variant that replaced the red-tinted Alpenflage across Swiss canton units.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Taz_90_camo.jpg?width=700",
-        options: ["Switzerland (Modern Swiss Armed Forces)", "Germany", "Austria", "Liechtenstein"]
-      },
-      {
-        pattern: "Mitchell Pattern / Cloud",
-        nation: "United States (USMC Vietnam Era)",
-        clue: "Reversible helmet cover pattern featuring lush overlapping green leaves on one side and brown clouds on reverse.",
-        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Mitchell_pattern.jpg?width=700",
-        options: ["United States (USMC Vietnam Era)", "South Korea", "Philippines", "Australia"]
       }
     ];
 
@@ -643,7 +623,7 @@
     ];
 
     // ==========================================
-    // 6. 40 SCRAMBLE WORDS (Office & Tactical)
+    // 6. 40 SCRAMBLE WORDS
     // ==========================================
     const SCRAMBLE_WORDS = [
       { word: "DEADLINE", hint: "Something your boss reminds you about daily" },
@@ -687,6 +667,105 @@
       { word: "TRAJECTORY", hint: "Path followed by a missile or corporate career" },
       { word: "COCKPIT", hint: "Where pilots manage flight instruments and dogfights" }
     ];
+
+    // ==========================================
+    // PROCEDURAL SVG CAMO SHADER (Zero external dependencies)
+    // ==========================================
+    function CamoShader({ item }) {
+      const { style, colors } = item;
+      const c1 = colors[0], c2 = colors[1], c3 = colors[2], c4 = colors[3];
+
+      if (style === 'digital') {
+        // CADPAT / MARPAT Micro-pixel shader
+        return (
+          <svg className="w-full h-full object-cover" viewBox="0 0 100 60" preserveAspectRatio="none">
+            <rect width="100" height="60" fill={c1} />
+            {Array.from({ length: 45 }).map((_, i) => (
+              <rect key={'d2-'+i} x={(i * 17) % 96} y={(i * 11) % 56} width="4" height="4" fill={c2} />
+            ))}
+            {Array.from({ length: 35 }).map((_, i) => (
+              <rect key={'d3-'+i} x={(i * 23 + 5) % 96} y={(i * 13 + 3) % 56} width="4" height="4" fill={c3} />
+            ))}
+            {Array.from({ length: 30 }).map((_, i) => (
+              <rect key={'d4-'+i} x={(i * 31 + 7) % 96} y={(i * 19 + 5) % 56} width="3" height="3" fill={c4} />
+            ))}
+          </svg>
+        );
+      }
+
+      if (style === 'dots') {
+        // Flecktarn Pea-dot shader
+        return (
+          <svg className="w-full h-full object-cover" viewBox="0 0 100 60" preserveAspectRatio="none">
+            <rect width="100" height="60" fill={c1} />
+            {Array.from({ length: 30 }).map((_, i) => (
+              <circle key={'p1-'+i} cx={(i * 13) % 100} cy={(i * 17) % 60} r="4" fill={c2} />
+            ))}
+            {Array.from({ length: 40 }).map((_, i) => (
+              <circle key={'p2-'+i} cx={(i * 19 + 7) % 100} cy={(i * 11 + 5) % 60} r="2.5" fill={c3} />
+            ))}
+            {Array.from({ length: 35 }).map((_, i) => (
+              <circle key={'p3-'+i} cx={(i * 29 + 3) % 100} cy={(i * 13 + 2) % 60} r="3" fill={c4} />
+            ))}
+          </svg>
+        );
+      }
+
+      if (style === 'geometric') {
+        // M90 Splinter shader
+        return (
+          <svg className="w-full h-full object-cover" viewBox="0 0 100 60" preserveAspectRatio="none">
+            <rect width="100" height="60" fill={c1} />
+            <polygon points="0,0 35,0 15,30" fill={c2} />
+            <polygon points="35,0 75,0 55,25" fill={c3} />
+            <polygon points="75,0 100,0 85,35" fill={c4} />
+            <polygon points="15,30 45,20 30,60 0,60" fill={c3} />
+            <polygon points="45,20 85,25 65,60 30,60" fill={c2} />
+            <polygon points="85,25 100,20 100,60 65,60" fill={c4} />
+          </svg>
+        );
+      }
+
+      if (style === 'stripes') {
+        // Tigerstripe & Brushstroke shader
+        return (
+          <svg className="w-full h-full object-cover" viewBox="0 0 100 60" preserveAspectRatio="none">
+            <rect width="100" height="60" fill={c1} />
+            <path d="M -10,12 Q 25,6 60,16 T 110,10 L 110,22 Q 70,16 30,26 Z" fill={c2} />
+            <path d="M -10,32 Q 35,26 75,36 T 110,30 L 110,40 Q 60,32 10,42 Z" fill={c3} />
+            <path d="M -10,48 Q 20,42 65,52 T 110,46 L 110,58 Q 50,48 0,58 Z" fill={c4} />
+          </svg>
+        );
+      }
+
+      if (style === 'grid') {
+        // Desert Night Camo grid shader
+        return (
+          <svg className="w-full h-full object-cover" viewBox="0 0 100 60">
+            <rect width="100" height="60" fill={c1} />
+            <defs>
+              <pattern id="dncGrid" width="6" height="6" patternUnits="userSpaceOnUse">
+                <rect width="6" height="6" fill="none" stroke={c2} strokeWidth="0.5" />
+                <circle cx="3" cy="3" r="0.8" fill={c3} />
+              </pattern>
+            </defs>
+            <rect width="100" height="60" fill="url(#dncGrid)" />
+          </svg>
+        );
+      }
+
+      // Default Organic Woodland / MultiCam / Alpenflage shader
+      return (
+        <svg className="w-full h-full object-cover" viewBox="0 0 100 60" preserveAspectRatio="none">
+          <rect width="100" height="60" fill={c1} />
+          <path d="M 10,5 Q 35,20 20,40 Q 45,55 70,45 Q 90,30 80,10 Z" fill={c2} />
+          <path d="M 60,25 Q 85,35 75,55 Q 50,60 35,45 Q 40,25 60,25 Z" fill={c3} />
+          <circle cx="25" cy="20" r="7" fill={c4} />
+          <circle cx="75" cy="45" r="8" fill={c4} />
+          <circle cx="50" cy="12" r="5" fill={c4} />
+        </svg>
+      );
+    }
 
     // ==========================================
     // MAIN APP
@@ -823,7 +902,7 @@
                 <h1 className="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2">
                   DuoGames <span className="text-[10px] uppercase font-bold tracking-widest bg-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-full border border-indigo-500/30">1v1 Showdown</span>
                 </h1>
-                <p className="text-xs text-slate-400">Tactical, geographical, and photo intelligence duels</p>
+                <p className="text-xs text-slate-400">Tactical, geographical, and visual intelligence duels</p>
               </div>
             </div>
 
@@ -917,25 +996,25 @@
                     onClick={() => selectGame('geoguess')}
                   />
                   <GameCard 
+                    title="Camo & Uniforms" 
+                    desc="Classified visual identification. Spot military camouflage swatches"
+                    icon="🪖" 
+                    tag="Visual Shaders"
+                    onClick={() => selectGame('camo')}
+                  />
+                  <GameCard 
                     title="Warbirds & Aircraft" 
-                    desc="Identify jets, bombers & WWII fighters with photo recon cards"
+                    desc="Classified air recon. Identify combat aircraft by schematics and specs"
                     icon="✈️" 
-                    tag="20 Photos"
+                    tag="20 Aircraft"
                     onClick={() => selectGame('aircraft')}
                   />
                   <GameCard 
                     title="Firearms & Rifles" 
-                    desc="Service rifles, bullpups & snipers with visual armory photos"
+                    desc="Armory inspection. Service rifles, bullpups & snipers by caliber"
                     icon="🎯" 
-                    tag="20 Photos"
+                    tag="20 Weapons"
                     onClick={() => selectGame('weapons')}
-                  />
-                  <GameCard 
-                    title="Camo & Uniforms" 
-                    desc="Identify military uniforms with textured camo swatch photos"
-                    icon="🪖" 
-                    tag="20 Photos"
-                    onClick={() => selectGame('camo')}
                   />
                   <GameCard 
                     title="Guess the Era" 
@@ -984,9 +1063,9 @@
                 </button>
 
                 {activeGame === 'geoguess' && <GeoGuess role={role} offset={gameOffset} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+                {activeGame === 'camo' && <CamoSpotter role={role} offset={gameOffset} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
                 {activeGame === 'aircraft' && <AircraftRecon role={role} offset={gameOffset} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
                 {activeGame === 'weapons' && <WeaponsRecon role={role} offset={gameOffset} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
-                {activeGame === 'camo' && <CamoSpotter role={role} offset={gameOffset} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
                 {activeGame === 'era' && <GuessEra role={role} offset={gameOffset} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
                 {activeGame === 'connect4' && <Connect4 role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
                 {activeGame === 'quickdraw' && <QuickDraw role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
@@ -1030,7 +1109,358 @@
     }
 
     // ==========================================
-    // 1. GEOGUESS 2.0 (50 Landmarks + Real Km)
+    // 1. CAMO & UNIFORM SPOTTER (Fixed: No Spoilers + Zero-Fail Shaders)
+    // ==========================================
+    function CamoSpotter({ role, offset, sendData, connRef, addPoint }) {
+      const [roundIdx, setRoundIdx] = useState(0);
+      const [myPick, setMyPick] = useState(null);
+      const [oppPick, setOppPick] = useState(null);
+      const [resolved, setResolved] = useState(false);
+
+      const effectiveIdx = (roundIdx + offset) % CAMO_ROUNDS.length;
+      const cur = CAMO_ROUNDS[effectiveIdx];
+
+      useEffect(() => {
+        if (!connRef.current) return;
+        connRef.current.on('data', (d) => {
+          if (d.type === 'CAMO_ANSWER') setOppPick(d.answer);
+          else if (d.type === 'CAMO_NEXT') next();
+        });
+      }, [roundIdx]);
+
+      useEffect(() => {
+        if (myPick && (role === 'solo' || oppPick)) {
+          setResolved(true);
+          const iAmRight = myPick === cur.nation;
+          const oppRight = oppPick === cur.nation;
+
+          if (role !== 'solo') {
+            if (iAmRight && !oppRight) addPoint(role);
+            else if (oppRight && !iAmRight) addPoint(role === 'host' ? 'guest' : 'host');
+          }
+        }
+      }, [myPick, oppPick]);
+
+      const choose = (opt) => {
+        if (myPick) return;
+        setMyPick(opt);
+        sendData({ type: 'CAMO_ANSWER', answer: opt });
+        playTone(550, 'sine', 0.08);
+      };
+
+      const next = () => {
+        setMyPick(null);
+        setOppPick(null);
+        setResolved(false);
+        setRoundIdx(i => i + 1);
+      };
+
+      return (
+        <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl max-w-xl mx-auto space-y-6 shadow-2xl">
+          <div className="flex justify-between items-center">
+            <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Classified Uniform Spotter</span>
+            <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Target {roundIdx + 1} of {CAMO_ROUNDS.length}</span>
+          </div>
+
+          {/* Visual Procedural Camouflage Shader (Always Loads Perfectly) */}
+          <div className="relative w-full h-56 bg-slate-950 rounded-2xl overflow-hidden border-2 border-slate-700 shadow-2xl group">
+            <CamoShader item={cur} />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none"></div>
+
+            {/* Anti-Spoiler Badge: Only show name AFTER answering */}
+            <div className="absolute top-3 left-3 bg-slate-950/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-700 text-xs font-black tracking-wide text-white">
+              {resolved ? `Pattern: ${cur.pattern}` : `Classified Swatch #${roundIdx + 1}`}
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-400 italic text-center px-4 leading-relaxed">
+            "{cur.clue}"
+          </p>
+
+          <div className="text-center text-xs font-bold text-slate-300">Which military or nation fielded this uniform?</div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {cur.options.map((opt, i) => {
+              const isCorrect = resolved && opt === cur.nation;
+              const isMyChoice = myPick === opt;
+              const isOppChoice = resolved && oppPick === opt;
+
+              let btnStyle = "bg-slate-950 border-slate-800 hover:border-indigo-500/50 text-slate-200";
+              if (isCorrect) btnStyle = "bg-emerald-950/80 border-emerald-500 text-emerald-300";
+              else if (isMyChoice && !isCorrect && resolved) btnStyle = "bg-rose-950/80 border-rose-500 text-rose-300";
+
+              return (
+                <button
+                  key={i}
+                  disabled={myPick !== null}
+                  onClick={() => choose(opt)}
+                  className={`p-4 rounded-xl border-2 font-bold text-xs text-left transition flex justify-between items-center ${btnStyle}`}
+                >
+                  <span>{opt}</span>
+                  {isMyChoice && <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded">You</span>}
+                  {isOppChoice && <span className="text-[10px] bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded">Opp</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          {resolved && (
+            <div className="space-y-4 pt-2">
+              <div className="text-center text-xs font-bold">
+                {myPick === cur.nation ? (
+                  <span className="text-emerald-400">✓ Target Identified: {cur.nation}! ({cur.pattern})</span>
+                ) : (
+                  <span className="text-rose-400">✗ Incorrect! Issued by: {cur.nation} ({cur.pattern})</span>
+                )}
+              </div>
+              <button 
+                onClick={() => { next(); sendData({ type: 'CAMO_NEXT' }); }}
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/30"
+              >
+                Next Camo Pattern →
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 2. RECON: COMBAT AIRCRAFT (Anti-Spoiler + Schematics)
+    // ==========================================
+    function AircraftRecon({ role, offset, sendData, connRef, addPoint }) {
+      const [roundIdx, setRoundIdx] = useState(0);
+      const [myPick, setMyPick] = useState(null);
+      const [oppPick, setOppPick] = useState(null);
+      const [resolved, setResolved] = useState(false);
+
+      const effectiveIdx = (roundIdx + offset) % AIRCRAFT_ROUNDS.length;
+      const cur = AIRCRAFT_ROUNDS[effectiveIdx];
+
+      useEffect(() => {
+        if (!connRef.current) return;
+        connRef.current.on('data', (d) => {
+          if (d.type === 'AIR_ANSWER') setOppPick(d.answer);
+          else if (d.type === 'AIR_NEXT') next();
+        });
+      }, [roundIdx]);
+
+      useEffect(() => {
+        if (myPick && (role === 'solo' || oppPick)) {
+          setResolved(true);
+          const iAmRight = myPick === cur.name;
+          const oppRight = oppPick === cur.name;
+
+          if (role !== 'solo') {
+            if (iAmRight && !oppRight) addPoint(role);
+            else if (oppRight && !iAmRight) addPoint(role === 'host' ? 'guest' : 'host');
+          }
+        }
+      }, [myPick, oppPick]);
+
+      const choose = (opt) => {
+        if (myPick) return;
+        setMyPick(opt);
+        sendData({ type: 'AIR_ANSWER', answer: opt });
+        playTone(500, 'sine', 0.08);
+      };
+
+      const next = () => {
+        setMyPick(null);
+        setOppPick(null);
+        setResolved(false);
+        setRoundIdx(i => i + 1);
+      };
+
+      return (
+        <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl max-w-xl mx-auto space-y-6 shadow-2xl">
+          <div className="flex justify-between items-center">
+            <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Classified Air Recon</span>
+            <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Target {roundIdx + 1} of {AIRCRAFT_ROUNDS.length}</span>
+          </div>
+
+          {/* Technical Flight Recon Silhouette Blueprint */}
+          <div className="relative w-full h-52 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex flex-col items-center justify-center p-6 shadow-inner">
+            <div className="w-20 h-20 rounded-full border-2 border-dashed border-indigo-500/40 flex items-center justify-center animate-pulse">
+              <span className="text-5xl">✈️</span>
+            </div>
+            <div className="absolute top-3 left-3 bg-slate-900/90 border border-slate-800 px-2.5 py-1 rounded-lg text-[10px] font-mono text-emerald-400">
+              Role: {cur.role}
+            </div>
+            <div className="absolute top-3 right-3 bg-slate-900/90 border border-slate-800 px-2.5 py-1 rounded-lg text-[10px] font-mono text-slate-300">
+              Origin: {cur.origin}
+            </div>
+          </div>
+
+          <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+            <p className="text-xs text-slate-300 font-mono leading-relaxed">"{cur.spec}"</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {cur.options.map((opt, i) => {
+              const isCorrect = resolved && opt === cur.name;
+              const isMyChoice = myPick === opt;
+              const isOppChoice = resolved && oppPick === opt;
+
+              let btnStyle = "bg-slate-950 border-slate-800 hover:border-indigo-500/50 text-slate-200";
+              if (isCorrect) btnStyle = "bg-emerald-950/80 border-emerald-500 text-emerald-300";
+              else if (isMyChoice && !isCorrect && resolved) btnStyle = "bg-rose-950/80 border-rose-500 text-rose-300";
+
+              return (
+                <button
+                  key={i}
+                  disabled={myPick !== null}
+                  onClick={() => choose(opt)}
+                  className={`p-4 rounded-xl border-2 font-bold text-sm text-left transition flex justify-between items-center ${btnStyle}`}
+                >
+                  <span>{opt}</span>
+                  {isMyChoice && <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded">You</span>}
+                  {isOppChoice && <span className="text-[10px] bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded">Opp</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          {resolved && (
+            <div className="space-y-4 pt-2">
+              <div className="text-center text-xs font-bold">
+                {myPick === cur.name ? (
+                  <span className="text-emerald-400">✓ Target Confirmed: {cur.name}!</span>
+                ) : (
+                  <span className="text-rose-400">✗ Negative! Correct aircraft: {cur.name}</span>
+                )}
+              </div>
+              <button 
+                onClick={() => { next(); sendData({ type: 'AIR_NEXT' }); }}
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm shadow-lg"
+              >
+                Next Aircraft →
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 3. RECON: FIREARMS & RIFLES (Anti-Spoiler + Schematics)
+    // ==========================================
+    function WeaponsRecon({ role, offset, sendData, connRef, addPoint }) {
+      const [roundIdx, setRoundIdx] = useState(0);
+      const [myPick, setMyPick] = useState(null);
+      const [oppPick, setOppPick] = useState(null);
+      const [resolved, setResolved] = useState(false);
+
+      const effectiveIdx = (roundIdx + offset) % WEAPON_ROUNDS.length;
+      const cur = WEAPON_ROUNDS[effectiveIdx];
+
+      useEffect(() => {
+        if (!connRef.current) return;
+        connRef.current.on('data', (d) => {
+          if (d.type === 'WEAPON_ANSWER') setOppPick(d.answer);
+          else if (d.type === 'WEAPON_NEXT') next();
+        });
+      }, [roundIdx]);
+
+      useEffect(() => {
+        if (myPick && (role === 'solo' || oppPick)) {
+          setResolved(true);
+          const iAmRight = myPick === cur.name;
+          const oppRight = oppPick === cur.name;
+
+          if (role !== 'solo') {
+            if (iAmRight && !oppRight) addPoint(role);
+            else if (oppRight && !iAmRight) addPoint(role === 'host' ? 'guest' : 'host');
+          }
+        }
+      }, [myPick, oppPick]);
+
+      const choose = (opt) => {
+        if (myPick) return;
+        setMyPick(opt);
+        sendData({ type: 'WEAPON_ANSWER', answer: opt });
+        playTone(600, 'triangle', 0.08);
+      };
+
+      const next = () => {
+        setMyPick(null);
+        setOppPick(null);
+        setResolved(false);
+        setRoundIdx(i => i + 1);
+      };
+
+      return (
+        <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl max-w-xl mx-auto space-y-6 shadow-2xl">
+          <div className="flex justify-between items-center">
+            <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Armory Inspection ID</span>
+            <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Weapon {roundIdx + 1} of {WEAPON_ROUNDS.length}</span>
+          </div>
+
+          {/* Technical Armory Silhouette Schematics */}
+          <div className="relative w-full h-48 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex flex-col items-center justify-center p-6 shadow-inner">
+            <div className="text-6xl mb-2">🎯</div>
+            <div className="flex gap-2">
+              <span className="text-xs font-mono font-bold text-amber-400 bg-amber-400/10 px-3 py-1 rounded-lg border border-amber-400/20">
+                Caliber: {cur.caliber}
+              </span>
+              <span className="text-xs font-mono text-slate-300 bg-slate-900 px-3 py-1 rounded-lg border border-slate-800">
+                Origin: {cur.origin}
+              </span>
+            </div>
+          </div>
+
+          <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+            <p className="text-xs text-slate-300 font-mono leading-relaxed">"{cur.spec}"</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {cur.options.map((opt, i) => {
+              const isCorrect = resolved && opt === cur.name;
+              const isMyChoice = myPick === opt;
+              const isOppChoice = resolved && oppPick === opt;
+
+              let btnStyle = "bg-slate-950 border-slate-800 hover:border-indigo-500/50 text-slate-200";
+              if (isCorrect) btnStyle = "bg-emerald-950/80 border-emerald-500 text-emerald-300";
+              else if (isMyChoice && !isCorrect && resolved) btnStyle = "bg-rose-950/80 border-rose-500 text-rose-300";
+
+              return (
+                <button
+                  key={i}
+                  disabled={myPick !== null}
+                  onClick={() => choose(opt)}
+                  className={`p-4 rounded-xl border-2 font-bold text-sm text-left transition flex justify-between items-center ${btnStyle}`}
+                >
+                  <span>{opt}</span>
+                  {isMyChoice && <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded">You</span>}
+                  {isOppChoice && <span className="text-[10px] bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded">Opp</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          {resolved && (
+            <div className="space-y-4 pt-2">
+              <div className="text-center text-xs font-bold">
+                {myPick === cur.name ? (
+                  <span className="text-emerald-400">✓ Correct Identification: {cur.name}!</span>
+                ) : (
+                  <span className="text-rose-400">✗ Misfire! Correct weapon was: {cur.name}</span>
+                )}
+              </div>
+              <button 
+                onClick={() => { next(); sendData({ type: 'WEAPON_NEXT' }); }}
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm shadow-lg"
+              >
+                Next Weapon →
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 4. GEOGUESS 2.0 (50 Landmarks + Real Km Distance)
     // ==========================================
     function GeoGuess({ role, offset, sendData, connRef, addPoint }) {
       const [roundIdx, setRoundIdx] = useState(0);
@@ -1205,380 +1635,6 @@
           ) : (
             <div className="mt-4 text-xs font-semibold text-slate-400">
               {!myPin ? "Click anywhere on the satellite map to place your pin" : "Pin locked! Waiting for opponent..."}
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // ==========================================
-    // 2. RECON: COMBAT AIRCRAFT (With Visual Photos)
-    // ==========================================
-    function AircraftRecon({ role, offset, sendData, connRef, addPoint }) {
-      const [roundIdx, setRoundIdx] = useState(0);
-      const [myPick, setMyPick] = useState(null);
-      const [oppPick, setOppPick] = useState(null);
-      const [resolved, setResolved] = useState(false);
-
-      const effectiveIdx = (roundIdx + offset) % AIRCRAFT_ROUNDS.length;
-      const cur = AIRCRAFT_ROUNDS[effectiveIdx];
-
-      useEffect(() => {
-        if (!connRef.current) return;
-        connRef.current.on('data', (d) => {
-          if (d.type === 'AIR_ANSWER') setOppPick(d.answer);
-          else if (d.type === 'AIR_NEXT') next();
-        });
-      }, [roundIdx]);
-
-      useEffect(() => {
-        if (myPick && (role === 'solo' || oppPick)) {
-          setResolved(true);
-          const iAmRight = myPick === cur.name;
-          const oppRight = oppPick === cur.name;
-
-          if (role !== 'solo') {
-            if (iAmRight && !oppRight) addPoint(role);
-            else if (oppRight && !iAmRight) addPoint(role === 'host' ? 'guest' : 'host');
-          }
-        }
-      }, [myPick, oppPick]);
-
-      const choose = (opt) => {
-        if (myPick) return;
-        setMyPick(opt);
-        sendData({ type: 'AIR_ANSWER', answer: opt });
-        playTone(500, 'sine', 0.08);
-      };
-
-      const next = () => {
-        setMyPick(null);
-        setOppPick(null);
-        setResolved(false);
-        setRoundIdx(i => i + 1);
-      };
-
-      return (
-        <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl max-w-xl mx-auto space-y-6 shadow-2xl">
-          <div className="flex justify-between items-center">
-            <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Combat Aircraft ID</span>
-            <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Target {roundIdx + 1} of {AIRCRAFT_ROUNDS.length}</span>
-          </div>
-
-          {/* Visual Aircraft Photo Recon */}
-          <div className="relative w-full h-56 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center group shadow-inner">
-            <img 
-              src={cur.img} 
-              alt="Aircraft Target"
-              referrerPolicy="no-referrer"
-              className="w-full h-full object-cover filter contrast-105 group-hover:scale-105 transition duration-300"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
-              }}
-            />
-            <div className="hidden absolute inset-0 items-center justify-center text-5xl">
-              ✈️
-            </div>
-            <div className="absolute bottom-2 left-2 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-800 text-[10px] font-mono text-emerald-400">
-              Role: {cur.role}
-            </div>
-          </div>
-
-          <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1">
-            <div className="text-xs text-slate-400">Origin: <strong className="text-white">{cur.origin}</strong></div>
-            <p className="text-xs text-slate-300 font-mono leading-relaxed">"{cur.spec}"</p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            {cur.options.map((opt, i) => {
-              const isCorrect = resolved && opt === cur.name;
-              const isMyChoice = myPick === opt;
-              const isOppChoice = resolved && oppPick === opt;
-
-              let btnStyle = "bg-slate-950 border-slate-800 hover:border-indigo-500/50 text-slate-200";
-              if (isCorrect) btnStyle = "bg-emerald-950/80 border-emerald-500 text-emerald-300";
-              else if (isMyChoice && !isCorrect && resolved) btnStyle = "bg-rose-950/80 border-rose-500 text-rose-300";
-
-              return (
-                <button
-                  key={i}
-                  disabled={myPick !== null}
-                  onClick={() => choose(opt)}
-                  className={`p-4 rounded-xl border-2 font-bold text-sm text-left transition flex justify-between items-center ${btnStyle}`}
-                >
-                  <span>{opt}</span>
-                  {isMyChoice && <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded">You</span>}
-                  {isOppChoice && <span className="text-[10px] bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded">Opp</span>}
-                </button>
-              );
-            })}
-          </div>
-
-          {resolved && (
-            <div className="space-y-4 pt-2">
-              <div className="text-center text-xs font-bold">
-                {myPick === cur.name ? (
-                  <span className="text-emerald-400">✓ Target Confirmed: {cur.name}!</span>
-                ) : (
-                  <span className="text-rose-400">✗ Negative! Correct answer: {cur.name}</span>
-                )}
-              </div>
-              <button 
-                onClick={() => { next(); sendData({ type: 'AIR_NEXT' }); }}
-                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm shadow-lg"
-              >
-                Next Aircraft →
-              </button>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // ==========================================
-    // 3. RECON: FIREARMS & RIFLES (With Visual Photos)
-    // ==========================================
-    function WeaponsRecon({ role, offset, sendData, connRef, addPoint }) {
-      const [roundIdx, setRoundIdx] = useState(0);
-      const [myPick, setMyPick] = useState(null);
-      const [oppPick, setOppPick] = useState(null);
-      const [resolved, setResolved] = useState(false);
-
-      const effectiveIdx = (roundIdx + offset) % WEAPON_ROUNDS.length;
-      const cur = WEAPON_ROUNDS[effectiveIdx];
-
-      useEffect(() => {
-        if (!connRef.current) return;
-        connRef.current.on('data', (d) => {
-          if (d.type === 'WEAPON_ANSWER') setOppPick(d.answer);
-          else if (d.type === 'WEAPON_NEXT') next();
-        });
-      }, [roundIdx]);
-
-      useEffect(() => {
-        if (myPick && (role === 'solo' || oppPick)) {
-          setResolved(true);
-          const iAmRight = myPick === cur.name;
-          const oppRight = oppPick === cur.name;
-
-          if (role !== 'solo') {
-            if (iAmRight && !oppRight) addPoint(role);
-            else if (oppRight && !iAmRight) addPoint(role === 'host' ? 'guest' : 'host');
-          }
-        }
-      }, [myPick, oppPick]);
-
-      const choose = (opt) => {
-        if (myPick) return;
-        setMyPick(opt);
-        sendData({ type: 'WEAPON_ANSWER', answer: opt });
-        playTone(600, 'triangle', 0.08);
-      };
-
-      const next = () => {
-        setMyPick(null);
-        setOppPick(null);
-        setResolved(false);
-        setRoundIdx(i => i + 1);
-      };
-
-      return (
-        <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl max-w-xl mx-auto space-y-6 shadow-2xl">
-          <div className="flex justify-between items-center">
-            <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Armory Service Rifle ID</span>
-            <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Weapon {roundIdx + 1} of {WEAPON_ROUNDS.length}</span>
-          </div>
-
-          {/* Visual Weapon Photo */}
-          <div className="relative w-full h-52 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center p-4 shadow-inner">
-            <img 
-              src={cur.img} 
-              alt="Weapon Silhouette"
-              referrerPolicy="no-referrer"
-              className="max-w-full max-h-full object-contain filter drop-shadow-2xl"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
-              }}
-            />
-            <div className="hidden absolute inset-0 items-center justify-center text-5xl">
-              🎯
-            </div>
-            <div className="absolute top-2 right-2 bg-amber-400/10 border border-amber-400/20 text-amber-300 px-2.5 py-0.5 rounded-lg text-[10px] font-mono font-bold">
-              Caliber: {cur.caliber}
-            </div>
-          </div>
-
-          <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1">
-            <div className="text-xs text-slate-400">Origin: <strong className="text-white">{cur.origin}</strong></div>
-            <p className="text-xs text-slate-300 font-mono leading-relaxed">"{cur.spec}"</p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            {cur.options.map((opt, i) => {
-              const isCorrect = resolved && opt === cur.name;
-              const isMyChoice = myPick === opt;
-              const isOppChoice = resolved && oppPick === opt;
-
-              let btnStyle = "bg-slate-950 border-slate-800 hover:border-indigo-500/50 text-slate-200";
-              if (isCorrect) btnStyle = "bg-emerald-950/80 border-emerald-500 text-emerald-300";
-              else if (isMyChoice && !isCorrect && resolved) btnStyle = "bg-rose-950/80 border-rose-500 text-rose-300";
-
-              return (
-                <button
-                  key={i}
-                  disabled={myPick !== null}
-                  onClick={() => choose(opt)}
-                  className={`p-4 rounded-xl border-2 font-bold text-sm text-left transition flex justify-between items-center ${btnStyle}`}
-                >
-                  <span>{opt}</span>
-                  {isMyChoice && <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded">You</span>}
-                  {isOppChoice && <span className="text-[10px] bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded">Opp</span>}
-                </button>
-              );
-            })}
-          </div>
-
-          {resolved && (
-            <div className="space-y-4 pt-2">
-              <div className="text-center text-xs font-bold">
-                {myPick === cur.name ? (
-                  <span className="text-emerald-400">✓ Correct Identification: {cur.name}!</span>
-                ) : (
-                  <span className="text-rose-400">✗ Misfire! Correct answer was {cur.name}</span>
-                )}
-              </div>
-              <button 
-                onClick={() => { next(); sendData({ type: 'WEAPON_NEXT' }); }}
-                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm shadow-lg"
-              >
-                Next Weapon →
-              </button>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // ==========================================
-    // 4. CAMO & UNIFORM SPOTTER (With Textured Swatch Photos)
-    // ==========================================
-    function CamoSpotter({ role, offset, sendData, connRef, addPoint }) {
-      const [roundIdx, setRoundIdx] = useState(0);
-      const [myPick, setMyPick] = useState(null);
-      const [oppPick, setOppPick] = useState(null);
-      const [resolved, setResolved] = useState(false);
-
-      const effectiveIdx = (roundIdx + offset) % CAMO_ROUNDS.length;
-      const cur = CAMO_ROUNDS[effectiveIdx];
-
-      useEffect(() => {
-        if (!connRef.current) return;
-        connRef.current.on('data', (d) => {
-          if (d.type === 'CAMO_ANSWER') setOppPick(d.answer);
-          else if (d.type === 'CAMO_NEXT') next();
-        });
-      }, [roundIdx]);
-
-      useEffect(() => {
-        if (myPick && (role === 'solo' || oppPick)) {
-          setResolved(true);
-          const iAmRight = myPick === cur.nation;
-          const oppRight = oppPick === cur.nation;
-
-          if (role !== 'solo') {
-            if (iAmRight && !oppRight) addPoint(role);
-            else if (oppRight && !iAmRight) addPoint(role === 'host' ? 'guest' : 'host');
-          }
-        }
-      }, [myPick, oppPick]);
-
-      const choose = (opt) => {
-        if (myPick) return;
-        setMyPick(opt);
-        sendData({ type: 'CAMO_ANSWER', answer: opt });
-        playTone(550, 'sine', 0.08);
-      };
-
-      const next = () => {
-        setMyPick(null);
-        setOppPick(null);
-        setResolved(false);
-        setRoundIdx(i => i + 1);
-      };
-
-      return (
-        <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl max-w-xl mx-auto space-y-6 shadow-2xl">
-          <div className="flex justify-between items-center">
-            <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Military Camo Spotter</span>
-            <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Pattern {roundIdx + 1} of {CAMO_ROUNDS.length}</span>
-          </div>
-
-          {/* Textured Camouflage Swatch Preview */}
-          <div className="relative w-full h-56 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-inner group">
-            <img 
-              src={cur.img} 
-              alt="Camouflage Swatch"
-              referrerPolicy="no-referrer"
-              className="w-full h-full object-cover filter contrast-110 saturate-110 group-hover:scale-105 transition duration-300"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
-              }}
-            />
-            <div className="hidden absolute inset-0 items-center justify-center text-5xl">
-              🪖
-            </div>
-            <div className="absolute top-2 left-2 bg-slate-950/80 backdrop-blur-md px-3 py-1 rounded-lg border border-slate-800 text-sm font-black text-white">
-              {cur.pattern}
-            </div>
-          </div>
-
-          <p className="text-xs text-slate-400 italic text-center px-4">"{cur.clue}"</p>
-
-          <div className="text-center text-xs font-bold text-slate-400">Which military or nation fielded this uniform?</div>
-
-          <div className="grid grid-cols-2 gap-3">
-            {cur.options.map((opt, i) => {
-              const isCorrect = resolved && opt === cur.nation;
-              const isMyChoice = myPick === opt;
-              const isOppChoice = resolved && oppPick === opt;
-
-              let btnStyle = "bg-slate-950 border-slate-800 hover:border-indigo-500/50 text-slate-200";
-              if (isCorrect) btnStyle = "bg-emerald-950/80 border-emerald-500 text-emerald-300";
-              else if (isMyChoice && !isCorrect && resolved) btnStyle = "bg-rose-950/80 border-rose-500 text-rose-300";
-
-              return (
-                <button
-                  key={i}
-                  disabled={myPick !== null}
-                  onClick={() => choose(opt)}
-                  className={`p-4 rounded-xl border-2 font-bold text-xs text-left transition flex justify-between items-center ${btnStyle}`}
-                >
-                  <span>{opt}</span>
-                  {isMyChoice && <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded">You</span>}
-                  {isOppChoice && <span className="text-[10px] bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded">Opp</span>}
-                </button>
-              );
-            })}
-          </div>
-
-          {resolved && (
-            <div className="space-y-4 pt-2">
-              <div className="text-center text-xs font-bold">
-                {myPick === cur.nation ? (
-                  <span className="text-emerald-400">✓ Correct Nation: {cur.nation}!</span>
-                ) : (
-                  <span className="text-rose-400">✗ Incorrect! Issued by: {cur.nation}</span>
-                )}
-              </div>
-              <button 
-                onClick={() => { next(); sendData({ type: 'CAMO_NEXT' }); }}
-                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm shadow-lg"
-              >
-                Next Camo Pattern →
-              </button>
             </div>
           )}
         </div>
