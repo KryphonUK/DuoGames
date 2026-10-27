@@ -109,459 +109,439 @@
     ];
 
     // ==========================================
-    // 2. 20 MILITARY CAMOUFLAGE PATTERNS (Anti-Spoiler + Vector Camo Shaders)
+    // 2. 20 MILITARY CAMO (Real Photo Swatches + No Spoilers)
     // ==========================================
     const CAMO_ROUNDS = [
       {
-        pattern: "CADPAT (Temperate Woodland)",
+        pattern: "CADPAT",
         nation: "Canada",
-        style: "digital",
-        colors: ["#2d401e", "#1b2913", "#45331e", "#141414"],
         clue: "The world's first operational computerized digital camouflage system using mathematically spaced micro-pixels.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/CADPAT_woodland_sample.jpg/800px-CADPAT_woodland_sample.jpg",
         options: ["Canada", "Norway", "Denmark", "Australia"]
       },
       {
         pattern: "Flecktarn",
-        nation: "Germany (Bundeswehr)",
-        style: "dots",
-        colors: ["#3d4722", "#242d17", "#6e3a1f", "#111111"],
-        clue: "5-color disruptive pea-dot pattern (dark green, light green, black, red-brown, olive).",
-        options: ["Germany (Bundeswehr)", "Switzerland", "Austria", "Netherlands"]
+        nation: "Germany",
+        clue: "5-color disruptive pea-dot pattern composed of dark green, light green, black, red-brown, and olive.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Flecktarn_Muster.jpg/800px-Flecktarn_Muster.jpg",
+        options: ["Germany", "Switzerland", "Austria", "Netherlands"]
       },
       {
         pattern: "M81 Woodland",
-        nation: "United States (1981-2000s)",
-        style: "organic",
-        colors: ["#8f7e5b", "#3e5229", "#3b271b", "#141414"],
-        clue: "High-contrast 4-color pattern (sand, brown, green, black) copied by dozens of nations worldwide.",
-        options: ["United States (1981-2000s)", "France", "Spain", "Poland"]
+        nation: "United States",
+        clue: "High-contrast 4-color pattern (sand, brown, green, black) widely copied by dozens of armed forces.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/M81_Woodland_camo_pattern.png/800px-M81_Woodland_camo_pattern.png",
+        options: ["United States", "France", "Spain", "Poland"]
       },
       {
         pattern: "MARPAT",
         nation: "United States Marine Corps",
-        style: "digital",
-        colors: ["#7a6345", "#475225", "#2e3b20", "#181816"],
         clue: "Digital pixelated camouflage containing tiny embedded branch insignias, issued to naval infantry.",
-        options: ["United States Marine Corps", "British Royal Marines", "Russian VDV", "French Foreign Legion"]
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/MARPAT_desert_camouflage_swatch,_24.55%22.jpg/800px-MARPAT_desert_camouflage_swatch,_24.55%22.jpg",
+        options: ["United States Marine Corps", "British Royal Marines", "Russian Naval Infantry", "French Foreign Legion"]
       },
       {
         pattern: "M90 Splinter",
         nation: "Sweden",
-        style: "geometric",
-        colors: ["#3b6b35", "#183015", "#1d2420", "#7f8a6c"],
         clue: "Distinct hard-edged geometric polygon camouflage designed for Nordic pine forests and tundra.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/M90_camo.jpg/800px-M90_camo.jpg",
         options: ["Sweden", "Finland", "Estonia", "Japan"]
       },
       {
         pattern: "Tigerstripe",
-        nation: "Vietnam War (US Special Forces)",
-        style: "stripes",
-        colors: ["#445426", "#7d7857", "#121212", "#273315"],
-        clue: "Dense horizontal interlocking brushstrokes developed for close-quarters jungle warfare.",
-        options: ["Vietnam War (US Special Forces)", "Rhodesian SAS", "Cuban Troops", "Korean Marines"]
+        nation: "Vietnam War (Special Forces)",
+        clue: "Dense horizontal interlocking brushstrokes developed for close-quarters dense jungle warfare.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Tigerstripe_camo.jpg/800px-Tigerstripe_camo.jpg",
+        options: ["Vietnam War (Special Forces)", "Rhodesian SAS", "Cuban Troops", "Korean Marines"]
       },
       {
         pattern: "Alpenflage (TAZ 57)",
         nation: "Switzerland",
-        style: "alpen",
-        colors: ["#b53b2a", "#344724", "#261d15", "#c7ba9f"],
         clue: "High-contrast alpine pattern with distinctive bright red/orange patches to blend with mountain scree.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Tarnanzug_57_alpenflage.jpg/800px-Tarnanzug_57_alpenflage.jpg",
         options: ["Switzerland", "Italy", "Austria", "Czech Republic"]
       },
       {
         pattern: "Desert DPM",
         nation: "United Kingdom",
-        style: "stripes",
-        colors: ["#c7b380", "#5c3316", "#a89467", "#381f0d"],
-        clue: "Brushstroke desert camouflage issued in 2-colour and 4-colour Gulf War configurations.",
+        clue: "Distinctive brushstroke desert camouflage issued in 2-colour and 4-colour Middle East deployments.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/DPM_desert.jpg/800px-DPM_desert.jpg",
         options: ["United Kingdom", "Saudi Arabia", "South Africa", "Jordan"]
       },
       {
         pattern: "MultiCam",
-        nation: "USA / International Special Ops",
-        style: "multicam",
-        colors: ["#82785d", "#5b6643", "#3d3023", "#9da37e"],
-        clue: "7-color gradient pattern blending browns, khakis, and lime greens across diverse environments.",
-        options: ["USA / International Special Ops", "Russia", "Sweden", "Israel"]
+        nation: "International Special Ops",
+        clue: "7-color gradient pattern blending browns, khakis, and lime greens across diverse terrain.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Multicam_pattern_(cropped).jpg/800px-Multicam_pattern_(cropped).jpg",
+        options: ["International Special Ops", "Russian VDV", "Swedish Rangers", "IDF"]
       },
       {
         pattern: "EMR / Digital Flora",
-        nation: "Russian Armed Forces",
-        style: "digital",
-        colors: ["#1c2914", "#2a3d1c", "#101a0b", "#3b4f26"],
-        clue: "Dense micro-pixelated dark green and black camouflage introduced with the modern Ratnik combat system.",
-        options: ["Russian Armed Forces", "Ukraine", "Belarus", "Kazakhstan"]
+        nation: "Russia",
+        clue: "Dense micro-pixelated dark green and black camouflage introduced with the modern Ratnik combat equipment system.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/EMR_camo_sample.jpg/800px-EMR_camo_sample.jpg",
+        options: ["Russia", "Ukraine", "Belarus", "Kazakhstan"]
       },
       {
         pattern: "Auscam / DPCU",
         nation: "Australia",
-        style: "dots",
-        colors: ["#8f7a4e", "#495b2d", "#362719", "#5e7339"],
         clue: "Nicknamed 'Jellybean Camo' due to its rounded green, tan, and brown amorphous blob shapes.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/DPCU_camo.jpg/800px-DPCU_camo.jpg",
         options: ["Australia", "New Zealand", "Fiji", "Singapore"]
       },
       {
         pattern: "CCE (Camouflage Centre-Europe)",
         nation: "France",
-        style: "organic",
-        colors: ["#7a6c50", "#384725", "#2e2117", "#111111"],
         clue: "Four-color woodland pattern with thick horizontal stripes issued across European and Foreign Legion units.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/CCE_camo.jpg/800px-CCE_camo.jpg",
         options: ["France", "Belgium", "Portugal", "Romania"]
       },
       {
         pattern: "Rhodesian Brushstroke",
-        nation: "Rhodesian Security Forces",
-        style: "stripes",
-        colors: ["#8c7c56", "#2d3d1e", "#382414", "#706342"],
+        nation: "Rhodesia",
         clue: "Distinctive diagonal coarse brushstrokes in dark green and brown over light khaki; iconic bush warfare pattern.",
-        options: ["Rhodesian Security Forces", "South Africa", "Kenya", "Namibia"]
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Rhodesian_brushstroke_camo.jpg/800px-Rhodesian_brushstroke_camo.jpg",
+        options: ["Rhodesia", "South Africa", "Kenya", "Namibia"]
       },
       {
         pattern: "Jigsaw Camouflage",
         nation: "Belgium",
-        style: "organic",
-        colors: ["#807753", "#364a27", "#6b331f", "#141414"],
         clue: "Interlocking puzzle-piece shapes in khaki, dark green, and reddish-brown; standard issue for 60+ years.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Belgian_Jigsaw_camo.jpg/800px-Belgian_Jigsaw_camo.jpg",
         options: ["Belgium", "Netherlands", "Luxembourg", "Denmark"]
       },
       {
         pattern: "M05 Military Pattern",
-        nation: "Finland (Finnish Defence Forces)",
-        style: "digital",
-        colors: ["#2d401e", "#1b2913", "#3d3023", "#0d140a"],
+        nation: "Finland",
         clue: "Scientifically sampled Scandinavian forest foliage digitally rendered into 4-color micro clusters.",
-        options: ["Finland (Finnish Defence Forces)", "Sweden", "Norway", "Latvia"]
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Finnish_M05_woodland.jpg/800px-Finnish_M05_woodland.jpg",
+        options: ["Finland", "Sweden", "Norway", "Latvia"]
       },
       {
         pattern: "Desert Night Camo (DNC)",
-        nation: "United States (Gulf War)",
-        style: "grid",
-        colors: ["#2a3b1f", "#1b2614", "#384d28", "#111a0c"],
-        clue: "Dark green two-color grid pattern with tiny spots intended to disrupt Soviet-era night vision optics.",
-        options: ["United States (Gulf War)", "Israel", "Saudi Arabia", "Kuwait"]
+        nation: "United States (Desert Storm)",
+        clue: "Dark green two-color grid pattern with tiny crosshatch spots intended to disrupt early night vision optics.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/DNC_pattern.jpg/800px-DNC_pattern.jpg",
+        options: ["United States (Desert Storm)", "Israel", "Saudi Arabia", "Kuwait"]
       },
       {
         pattern: "Wz. 93 Pantera",
-        nation: "Poland (Polish Armed Forces)",
-        style: "dots",
-        colors: ["#54613c", "#333d22", "#423120", "#181f11"],
+        nation: "Poland",
         clue: "Greenish-brown amorphous amoeba spots on a pale olive-green backdrop, standard for Land Forces.",
-        options: ["Poland (Polish Armed Forces)", "Czech Republic", "Slovakia", "Hungary"]
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/WZ.93_Pantera.jpg/800px-WZ.93_Pantera.jpg",
+        options: ["Poland", "Czech Republic", "Slovakia", "Hungary"]
       },
       {
         pattern: "Greek Lizard",
-        nation: "Greece (Hellenic Armed Forces)",
-        style: "stripes",
-        colors: ["#665e43", "#2c3b1d", "#402e1c", "#1c2612"],
+        nation: "Greece",
         clue: "Horizontal brushstrokes derivative of TAP 47 lizard pattern, optimized for Mediterranean rocky brush.",
-        options: ["Greece (Hellenic Armed Forces)", "Turkey", "Cyprus", "Italy"]
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Greek_lizard_camo.jpg/800px-Greek_lizard_camo.jpg",
+        options: ["Greece", "Turkey", "Cyprus", "Italy"]
       },
       {
         pattern: "Taz 90",
-        nation: "Switzerland (Modern Swiss Armed Forces)",
-        style: "organic",
-        colors: ["#635c43", "#344522", "#38291e", "#141414"],
+        nation: "Switzerland",
         clue: "Modern 4-color woodland variant that replaced the red-tinted mountain camouflage across canton units.",
-        options: ["Switzerland (Modern Swiss Armed Forces)", "Germany", "Austria", "Liechtenstein"]
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Taz_90_camo.jpg/800px-Taz_90_camo.jpg",
+        options: ["Switzerland", "Germany", "Austria", "Liechtenstein"]
       },
       {
         pattern: "Mitchell Pattern / Cloud",
-        nation: "United States (USMC Vietnam Era)",
-        style: "organic",
-        colors: ["#5e6938", "#8c7348", "#2c3619", "#3b2b1b"],
+        nation: "United States (USMC 1960s)",
         clue: "Reversible helmet cover pattern featuring lush overlapping green leaves on one side and brown clouds on reverse.",
-        options: ["United States (USMC Vietnam Era)", "South Korea", "Philippines", "Australia"]
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Mitchell_pattern.jpg/800px-Mitchell_pattern.jpg",
+        options: ["United States (USMC 1960s)", "South Korea", "Philippines", "Australia"]
       }
     ];
 
     // ==========================================
-    // 3. 20 COMBAT AIRCRAFT (Anti-Spoiler + Vector Schematics)
+    // 3. 20 COMBAT AIRCRAFT (Real Photos + No Origin Spoilers)
     // ==========================================
     const AIRCRAFT_ROUNDS = [
       {
         name: "A-10 Thunderbolt II",
-        origin: "USA",
         role: "Close Air Support & Tank Buster",
-        spec: "Armed with 30mm GAU-8/A Avenger rotary cannon firing depleted uranium rounds; straight high-lift wings.",
+        spec: "Armed with a 30mm GAU-8/A Avenger rotary cannon; twin high-bypass turbofan engines mounted high above the fuselage.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/A-10_Thunderbolt_II_in-flight.jpg/800px-A-10_Thunderbolt_II_in-flight.jpg",
         options: ["A-10 Thunderbolt II", "Su-25 Frogfoot", "F-16 Fighting Falcon", "AV-8B Harrier II"]
       },
       {
         name: "SR-71 Blackbird",
-        origin: "USA (Skunk Works)",
         role: "Strategic Reconnaissance",
-        spec: "Capable of Mach 3.3+ and cruising above 85,000 feet; constructed primarily from heat-resistant titanium.",
+        spec: "Capable of Mach 3.3+ and cruising above 85,000 feet; constructed primarily from heat-treated titanium alloy.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Lockheed_SR-71_Blackbird.jpg/800px-Lockheed_SR-71_Blackbird.jpg",
         options: ["SR-71 Blackbird", "U-2 Dragon Lady", "MiG-25 Foxbat", "XB-70 Valkyrie"]
       },
       {
         name: "B-2 Spirit",
-        origin: "USA",
         role: "Stealth Strategic Heavy Bomber",
         spec: "Flying-wing design with continuous-curvature radar absorption skin and zero vertical tail fins.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/B-2_Spirit_original.jpg/800px-B-2_Spirit_original.jpg",
         options: ["B-2 Spirit", "B-21 Raider", "F-117 Nighthawk", "B-52 Stratofortress"]
       },
       {
         name: "F-22 Raptor",
-        origin: "USA",
         role: "5th-Gen Air Superiority Fighter",
-        spec: "Supercruise without afterburners, 2D thrust vectoring nozzles, all-aspect stealth shaping.",
+        spec: "Supercruise without afterburners, 2D thrust-vectoring nozzles, and all-aspect stealth shaping.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/F-22_Raptor_edit1.jpg/800px-F-22_Raptor_edit1.jpg",
         options: ["F-22 Raptor", "F-35 Lightning II", "Su-57 Felon", "J-20 Mighty Dragon"]
       },
       {
         name: "Supermarine Spitfire",
-        origin: "United Kingdom",
         role: "WWII Interceptor Fighter",
-        spec: "Famed elliptical wings, Rolls-Royce Merlin V12 liquid-cooled engine, hero of the Battle of Britain.",
+        spec: "Famed elliptical wings, liquid-cooled V12 engine, and high turning performance during 1940 dogfights.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Spitfire_Mark_I_K9942.jpg/800px-Spitfire_Mark_I_K9942.jpg",
         options: ["Supermarine Spitfire", "Hawker Hurricane", "Messerschmitt Bf 109", "P-51 Mustang"]
       },
       {
         name: "F-14 Tomcat",
-        origin: "USA",
         role: "Carrier-based Supersonic Interceptor",
-        spec: "Variable-sweep 'swing wings', twin vertical tails, long-range AIM-54 Phoenix missile carrier.",
+        spec: "Variable-sweep swing wings, twin vertical tails, and long-range AIM-54 Phoenix missile integration.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/F-14A_Tomcat_VF-142.jpg/800px-F-14A_Tomcat_VF-142.jpg",
         options: ["F-14 Tomcat", "F/A-18 Hornet", "Tornado ADV", "MiG-23 Flogger"]
       },
       {
         name: "F-35 Lightning II",
-        origin: "USA / Allied Consortium",
         role: "5th-Gen Multi-Role Stealth Fighter",
-        spec: "Electro-optical targeting system, helmet-mounted 360-degree vision, STOVL 'B' variant.",
+        spec: "Electro-optical targeting system, helmet-mounted 360-degree vision, and STOVL lift-fan variant capabilities.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/F-35A_flight_(cropped).jpg/800px-F-35A_flight_(cropped).jpg",
         options: ["F-35 Lightning II", "F-22 Raptor", "Su-75 Checkmate", "Gripen E"]
       },
       {
         name: "B-52 Stratofortress",
-        origin: "USA",
         role: "Long-Range Strategic Heavy Bomber",
-        spec: "Eight turbojet engines mounted in four underwing pods; continuous frontline service since the 1950s.",
+        spec: "Eight turbojet engines mounted in four underwing twin-pods; continuous frontline service since the 1950s.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/B-52_Stratofortress_assigned_to_the_307th_Bomb_Wing.jpg/800px-B-52_Stratofortress_assigned_to_the_307th_Bomb_Wing.jpg",
         options: ["B-52 Stratofortress", "Tu-95 Bear", "B-1B Lancer", "Vulcan B.2"]
       },
       {
         name: "AH-64 Apache",
-        origin: "USA",
         role: "Heavy Attack Helicopter",
-        spec: "Twin turboshafts, nose-mounted M230 30mm chain gun, AGM-114 Hellfire laser-guided missiles.",
+        spec: "Twin turboshaft engines, nose-mounted 30mm chain gun, and AGM-114 laser-guided anti-tank missiles.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Boeing_AH-64D_Apache_Longbow.jpg/800px-Boeing_AH-64D_Apache_Longbow.jpg",
         options: ["AH-64 Apache", "Ka-52 Alligator", "Mi-24 Hind", "Eurocopter Tiger"]
       },
       {
         name: "F-117 Nighthawk",
-        origin: "USA (Lockheed Skunk Works)",
         role: "Stealth Ground Attack Aircraft",
-        spec: "Faceted flat surface panels designed to scatter radar waves; nickname 'The Hopeless Diamond'.",
+        spec: "Faceted flat surface panels designed to deflect radar signals away from receiver dishes.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/F-117_Nighthawk_Front.jpg/800px-F-117_Nighthawk_Front.jpg",
         options: ["F-117 Nighthawk", "B-2 Spirit", "A-12 Avenger II", "YF-23 Black Widow"]
       },
       {
         name: "P-51 Mustang",
-        origin: "USA",
         role: "Long-Range WWII Escort Fighter",
-        spec: "Laminar flow wing and bubble canopy, fitted with Rolls-Royce Merlin engine to escort Allied bombers.",
+        spec: "Laminar flow wings, belly radiator scoop, bubble canopy, and drop-tank extended escort radius.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/P-51_Mustang_edit1.jpg/800px-P-51_Mustang_edit1.jpg",
         options: ["P-51 Mustang", "P-47 Thunderbolt", "P-38 Lightning", "Corsair F4U"]
       },
       {
         name: "Eurofighter Typhoon",
-        origin: "UK / Germany / Italy / Spain",
         role: "Multirole Canard-Delta Fighter",
-        spec: "Foreplane canards, delta wings, twin Eurojet EJ200 engines, high-agility dogfighter.",
+        spec: "Foreplane canards, delta wing layout, twin turbofans, and exceptional supersonic turn agility.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Eurofighter_Typhoon_RAF.jpg/800px-Eurofighter_Typhoon_RAF.jpg",
         options: ["Eurofighter Typhoon", "Dassault Rafale", "Saab JAS 39 Gripen", "Mirage 2000"]
       },
       {
         name: "AC-130 Gunship",
-        origin: "USA",
         role: "Heavy Ground Support Attack Aircraft",
-        spec: "Side-firing heavy armament including a 105mm M102 howitzer and 40mm cannons.",
+        spec: "Heavy transport airframe equipped with side-firing 105mm artillery howitzer and automated cannons.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/AC-130_Gunship.jpg/800px-AC-130_Gunship.jpg",
         options: ["AC-130 Gunship", "C-17 Globemaster", "An-124 Ruslan", "KC-135 Stratotanker"]
       },
       {
         name: "F-15 Eagle",
-        origin: "USA",
         role: "All-Weather Tactical Air Superiority",
-        spec: "Twin Pratt & Whitney turbofans, legendary combat air-to-air record of over 104 kills to 0 losses.",
+        spec: "Twin turbofans, large bubble canopy, and a combat air-to-air record of over 104 victories with zero shootdowns.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/F-15_Eagle_in_flight.jpg/800px-F-15_Eagle_in_flight.jpg",
         options: ["F-15 Eagle", "F-16 Falcon", "F-4 Phantom II", "Su-27 Flanker"]
       },
       {
         name: "Messerschmitt Bf 109",
-        origin: "Germany",
         role: "WWII Fighter & Interceptor",
-        spec: "Daimler-Benz inverted-V12 liquid-cooled engine, narrow-track gear, backbone of the Luftwaffe.",
+        spec: "Inverted-V12 liquid-cooled engine, narrow-track gear retracting outward, and centerline engine cannon.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Messerschmitt_Bf_109G-6.jpg/800px-Messerschmitt_Bf_109G-6.jpg",
         options: ["Messerschmitt Bf 109", "Focke-Wulf Fw 190", "Heinkel He 112", "Macchi C.202"]
       },
       {
         name: "U-2 Dragon Lady",
-        origin: "USA",
         role: "Ultra-High Altitude Reconnaissance",
-        spec: "Glider-like ultra-long wingspan operating at 70,000+ feet; pilot wears full astronaut pressure suit.",
+        spec: "Glider-like high-aspect wingspan operating at 70,000+ feet; pilot operates in a pressurized spacesuit.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Lockheed_U-2.jpg/800px-Lockheed_U-2.jpg",
         options: ["U-2 Dragon Lady", "SR-71 Blackbird", "Canberra PR.9", "WB-57F"]
       },
       {
         name: "Dassault Rafale",
-        origin: "France",
         role: "Omnirole Combat Aircraft",
-        spec: "Canard delta wing, Snecma M88 engines, Spectra electronic warfare suite; carrier catapult capable.",
+        spec: "Close-coupled canard delta wing, twin engines, radar-evasive shaping, and carrier catapult launch capability.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Dassault_Rafale_C.jpg/800px-Dassault_Rafale_C.jpg",
         options: ["Dassault Rafale", "Mirage 2000", "Eurofighter Typhoon", "JAS 39 Gripen"]
       },
       {
         name: "MiG-29 Fulcrum",
-        origin: "Soviet Union",
         role: "Air Superiority / Tactical Fighter",
-        spec: "Dual widely-spaced Klimov RD-33 turbofans, leading-edge root extensions, helmet-mounted missile sight.",
+        spec: "Widely spaced dual turbofans, blended wing-body root extensions, and helmet-mounted cueing sight.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/MiG-29_flight.jpg/800px-MiG-29_flight.jpg",
         options: ["MiG-29 Fulcrum", "Su-27 Flanker", "MiG-25 Foxbat", "MiG-21 Fishbed"]
       },
       {
         name: "AV-8B Harrier II",
-        origin: "United Kingdom / USA",
         role: "V/STOL Jump Jet Strike Aircraft",
-        spec: "Pegasus vectored-thrust engine with four rotating exhaust nozzles enabling hover and vertical landings.",
+        spec: "Vectored-thrust turbofan with four rotating exhaust nozzles enabling stationary hover and vertical landing.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/AV-8B_Harrier_II.jpg/800px-AV-8B_Harrier_II.jpg",
         options: ["AV-8B Harrier II", "Yak-38 Forger", "F-35B Lightning", "Mirage IIIV"]
       },
       {
         name: "Su-57 Felon",
-        origin: "Russia",
         role: "5th-Gen Multirole Stealth Fighter",
-        spec: "Blended wing-body fuselage with 3D thrust-vectoring Saturn engines and internal weapons bays.",
+        spec: "Blended wing-body fuselage with 3D thrust-vectoring engines, levcons, and tandem internal weapons bays.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Sukhoi_Su-57_in_flight.jpg/800px-Sukhoi_Su-57_in_flight.jpg",
         options: ["Su-57 Felon", "MiG-35 Fulcrum", "Su-35 Flanker-E", "J-20 Mighty Dragon"]
       }
     ];
 
     // ==========================================
-    // 4. 20 FIREARMS & RIFLES (Anti-Spoiler + Vector Schematics)
+    // 4. 20 FIREARMS & RIFLES (Real Photos + No Origin Spoilers)
     // ==========================================
     const WEAPON_ROUNDS = [
       {
         name: "AK-47 / AKM",
-        origin: "Soviet Union",
         caliber: "7.62x39mm",
         spec: "Long-stroke gas piston, rotating bolt, stamped receiver, curved steel magazine, legendary reliability in mud and sand.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/AK-47_type_II_noBG.png/800px-AK-47_type_II_noBG.png",
         options: ["AK-47 / AKM", "Type 56", "Galil", "SKS"]
       },
       {
         name: "M4A1 Carbine",
-        origin: "USA",
         caliber: "5.56x45mm NATO",
-        spec: "Direct impingement gas system, collapsible stock, Picatinny flat-top upper receiver; standard frontline US infantry carbine.",
+        spec: "Direct impingement gas system, collapsible stock, Picatinny flat-top upper receiver; widespread frontline military carbine.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/PEO_M4_Carbine_RAS_M68CCO_grip.jpg/800px-PEO_M4_Carbine_RAS_M68CCO_grip.jpg",
         options: ["M4A1 Carbine", "HK416", "FN SCAR-L", "SIG MCX"]
       },
       {
         name: "Steyr AUG",
-        origin: "Austria",
         caliber: "5.56x45mm NATO",
         spec: "Pioneering bullpup configuration with firing action behind trigger, translucent magazine, and integrated optical scope.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Steyr_AUG_A1_508mm_04.jpg/800px-Steyr_AUG_A1_508mm_04.jpg",
         options: ["Steyr AUG", "FAMAS F1", "SA80 / L85A2", "TAR-21 Tavor"]
       },
       {
         name: "FN P90",
-        origin: "Belgium",
         caliber: "5.7x28mm Armor-Piercing",
         spec: "Compact ambidextrous PDW with unique horizontal top-mounted 50-round translucent magazine and downward ejection.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/FN_P90.jpg/800px-FN_P90.jpg",
         options: ["FN P90", "MP7", "PP-19 Bizon", "Uzi"]
       },
       {
         name: "Barrett M82",
-        origin: "USA",
         caliber: ".50 BMG (12.7x99mm)",
         spec: "Semi-automatic anti-materiel sniper rifle with short-recoil operation, fluted barrel, and arrowhead dual-chamber brake.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Barrett_M82A1.jpg/800px-Barrett_M82A1.jpg",
         options: ["Barrett M82", "Accuracy International AX50", "CheyTac M200 Intervention", "McMillan TAC-50"]
       },
       {
         name: "HK MP5",
-        origin: "Germany",
         caliber: "9x19mm Parabellum",
-        spec: "Roller-delayed blowback closed-bolt submachine gun favored worldwide by British SAS, GSG 9, and SWAT tactical units.",
+        spec: "Roller-delayed blowback closed-bolt submachine gun favored worldwide by elite counter-terror and tactical SWAT units.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/HK_MP5_noBG.png/800px-HK_MP5_noBG.png",
         options: ["HK MP5", "CZ Scorpion Evo", "MAC-10", "Beretta M12"]
       },
       {
         name: "Karabiner 98k",
-        origin: "Germany",
         caliber: "7.92x57mm Mauser",
         spec: "Controlled-feed bolt-action military service rifle with internal 5-round stripper clip magazine; standard WWII infantry arm.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Mauser_Kar_98k.jpg/800px-Mauser_Kar_98k.jpg",
         options: ["Karabiner 98k", "Mosin-Nagant", "Lee-Enfield No. 4", "Springfield M1903"]
       },
       {
         name: "FN SCAR-H",
-        origin: "Belgium / USA",
         caliber: "7.62x51mm NATO (.308)",
         spec: "Short-stroke gas piston battle rifle featuring monolithic aluminum receiver, reciprocating handle, and folding modular stock.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/FN_SCAR-L_-_USA.jpg/800px-FN_SCAR-L_-_USA.jpg",
         options: ["FN SCAR-H", "HK G3", "M14 / EBR", "Galil ACE 32"]
       },
       {
         name: "SA80 / L85A2",
-        origin: "United Kingdom",
         caliber: "5.56x45mm NATO",
-        spec: "British Armed Forces standard issue bullpup rifle; modernized with German Heckler & Koch internals and SUSAT/ACOG optics.",
+        spec: "Bullpup infantry rifle featuring stamped steel receiver, short-stroke gas piston, and SUSAT/ACOG optical sights.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/L85A2_fitted_with_ACOG_Sight.jpg/800px-L85A2_fitted_with_ACOG_Sight.jpg",
         options: ["SA80 / L85A2", "FAMAS F1", "Steyr AUG", "QBZ-95"]
       },
       {
         name: "FAMAS F1",
-        origin: "France",
         caliber: "5.56x45mm NATO",
-        spec: "Lever-delayed blowback bullpup rifle nicknamed 'Le Clairon' (The Bugle) due to its elevated top carry handle.",
+        spec: "Lever-delayed blowback bullpup rifle nicknamed 'The Bugle' due to its elevated top carry handle.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/FAMAS_F1_no_background.png/800px-FAMAS_F1_no_background.png",
         options: ["FAMAS F1", "VHS-2", "Steyr AUG", "SA80 / L85A2"]
       },
       {
         name: "Dragunov SVD",
-        origin: "Soviet Union",
         caliber: "7.62x54mmR",
         spec: "Semi-automatic designated marksman rifle featuring skeletonized wooden thumbhole stock and side-mounted PSO-1 scope.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/SVD_Dragunov_with_PSO-1.jpg/800px-SVD_Dragunov_with_PSO-1.jpg",
         options: ["Dragunov SVD", "PSL", "Zastava M76", "M21 SWS"]
       },
       {
         name: "M1 Garand",
-        origin: "USA",
         caliber: ".30-06 Springfield",
         spec: "First semi-automatic rifle standard-issued to infantry; renowned for metallic 'ping' sound when en-bloc clip ejects.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/M1_Garand_rifle_cartridge.png/800px-M1_Garand_rifle_cartridge.png",
         options: ["M1 Garand", "M1 Carbine", "SVT-40", "Gewehr 43"]
       },
       {
         name: "HK G3",
-        origin: "Germany",
         caliber: "7.62x51mm NATO",
-        spec: "Cold War battle rifle utilizing roller-delayed blowback mechanism and fluted chamber; served with 40+ nations.",
+        spec: "Cold War battle rifle utilizing roller-delayed blowback mechanism and fluted chamber; served with 40+ armed forces.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Gewehr_G3A3.jpg/800px-Gewehr_G3A3.jpg",
         options: ["HK G3", "FN FAL", "CETME Model C", "SIG SG 510"]
       },
       {
         name: "FN FAL",
-        origin: "Belgium",
         caliber: "7.62x51mm NATO",
         spec: "Short-stroke gas-operated battle rifle widely nicknamed 'The Right Arm of the Free World' during the Cold War.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/FN_FAL.png/800px-FN_FAL.png",
         options: ["FN FAL", "HK G3", "M14", "AR-10"]
       },
       {
         name: "Kriss Vector",
-        origin: "USA",
         caliber: ".45 ACP / 9mm",
-        spec: "Futuristic submachine gun utilizing Super V articulated mechanism that redirects recoil energy downward.",
+        spec: "Futuristic submachine gun utilizing articulated mechanism that redirects recoil energy downward rather than backward.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Kriss_Vector.jpg/800px-Kriss_Vector.jpg",
         options: ["Kriss Vector", "UMP-45", "PP-19 Vityaz", "APC9"]
       },
       {
         name: "Benelli M4 (M1014)",
-        origin: "Italy",
         caliber: "12 Gauge Shotgun",
-        spec: "Auto-regulating gas-operated (ARGO) semi-automatic combat shotgun adopted by the United States Marine Corps.",
+        spec: "Auto-regulating gas-operated (ARGO) semi-automatic combat shotgun adopted by frontline marine and naval boarding teams.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/M1014_Shotgun.jpg/800px-M1014_Shotgun.jpg",
         options: ["Benelli M4 (M1014)", "SPAS-12", "Mossberg 590A1", "Remington 870"]
       },
       {
         name: "Thompson Submachine Gun",
-        origin: "USA",
         caliber: ".45 ACP",
-        spec: "Blowback SMG with finned barrel, Cutts compensator, and 50-round drum magazine; nicknamed 'Tommy Gun'.",
+        spec: "Blowback SMG with finned barrel, Cutts compensator, and 50-round drum magazine; nicknamed 'The Chicago Typewriter'.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Thompson_submachine_gun.jpg/800px-Thompson_submachine_gun.jpg",
         options: ["Thompson Submachine Gun", "M3 Grease Gun", "Sten Gun", "PPSh-41"]
       },
       {
         name: "PPSh-41",
-        origin: "Soviet Union",
         caliber: "7.62x25mm Tokarev",
         spec: "Mass-produced stamped sheet-metal WWII submachine gun firing at 1,000 rounds/min, often paired with a 71-round drum.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/PPSh-41.png/800px-PPSh-41.png",
         options: ["PPSh-41", "PPS-43", "Suomi KP/-31", "MP 40"]
       },
       {
         name: "CheyTac M200 Intervention",
-        origin: "USA",
         caliber: ".408 CheyTac",
         spec: "Extreme long-range bolt-action sniper rifle system engineered for precision sub-MOA groupings past 2,500 yards.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/CheyTac_M200_Intervention.jpg/800px-CheyTac_M200_Intervention.jpg",
         options: ["CheyTac M200 Intervention", "Barrett M82", "AI Arctic Warfare", "DSR-1"]
       },
       {
         name: "Desert Eagle",
-        origin: "USA / Israel",
         caliber: ".50 Action Express",
         spec: "Gas-operated rotating-bolt magnum hand cannon with triangular barrel slide, popular in cinema and gaming lore.",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Desert_Eagle_50_AE.jpg/800px-Desert_Eagle_50_AE.jpg",
         options: ["Desert Eagle", "AutoMag", "S&W 500", "Colt Anaconda"]
       }
     ];
@@ -667,105 +647,6 @@
       { word: "TRAJECTORY", hint: "Path followed by a missile or corporate career" },
       { word: "COCKPIT", hint: "Where pilots manage flight instruments and dogfights" }
     ];
-
-    // ==========================================
-    // PROCEDURAL SVG CAMO SHADER (Zero external dependencies)
-    // ==========================================
-    function CamoShader({ item }) {
-      const { style, colors } = item;
-      const c1 = colors[0], c2 = colors[1], c3 = colors[2], c4 = colors[3];
-
-      if (style === 'digital') {
-        // CADPAT / MARPAT Micro-pixel shader
-        return (
-          <svg className="w-full h-full object-cover" viewBox="0 0 100 60" preserveAspectRatio="none">
-            <rect width="100" height="60" fill={c1} />
-            {Array.from({ length: 45 }).map((_, i) => (
-              <rect key={'d2-'+i} x={(i * 17) % 96} y={(i * 11) % 56} width="4" height="4" fill={c2} />
-            ))}
-            {Array.from({ length: 35 }).map((_, i) => (
-              <rect key={'d3-'+i} x={(i * 23 + 5) % 96} y={(i * 13 + 3) % 56} width="4" height="4" fill={c3} />
-            ))}
-            {Array.from({ length: 30 }).map((_, i) => (
-              <rect key={'d4-'+i} x={(i * 31 + 7) % 96} y={(i * 19 + 5) % 56} width="3" height="3" fill={c4} />
-            ))}
-          </svg>
-        );
-      }
-
-      if (style === 'dots') {
-        // Flecktarn Pea-dot shader
-        return (
-          <svg className="w-full h-full object-cover" viewBox="0 0 100 60" preserveAspectRatio="none">
-            <rect width="100" height="60" fill={c1} />
-            {Array.from({ length: 30 }).map((_, i) => (
-              <circle key={'p1-'+i} cx={(i * 13) % 100} cy={(i * 17) % 60} r="4" fill={c2} />
-            ))}
-            {Array.from({ length: 40 }).map((_, i) => (
-              <circle key={'p2-'+i} cx={(i * 19 + 7) % 100} cy={(i * 11 + 5) % 60} r="2.5" fill={c3} />
-            ))}
-            {Array.from({ length: 35 }).map((_, i) => (
-              <circle key={'p3-'+i} cx={(i * 29 + 3) % 100} cy={(i * 13 + 2) % 60} r="3" fill={c4} />
-            ))}
-          </svg>
-        );
-      }
-
-      if (style === 'geometric') {
-        // M90 Splinter shader
-        return (
-          <svg className="w-full h-full object-cover" viewBox="0 0 100 60" preserveAspectRatio="none">
-            <rect width="100" height="60" fill={c1} />
-            <polygon points="0,0 35,0 15,30" fill={c2} />
-            <polygon points="35,0 75,0 55,25" fill={c3} />
-            <polygon points="75,0 100,0 85,35" fill={c4} />
-            <polygon points="15,30 45,20 30,60 0,60" fill={c3} />
-            <polygon points="45,20 85,25 65,60 30,60" fill={c2} />
-            <polygon points="85,25 100,20 100,60 65,60" fill={c4} />
-          </svg>
-        );
-      }
-
-      if (style === 'stripes') {
-        // Tigerstripe & Brushstroke shader
-        return (
-          <svg className="w-full h-full object-cover" viewBox="0 0 100 60" preserveAspectRatio="none">
-            <rect width="100" height="60" fill={c1} />
-            <path d="M -10,12 Q 25,6 60,16 T 110,10 L 110,22 Q 70,16 30,26 Z" fill={c2} />
-            <path d="M -10,32 Q 35,26 75,36 T 110,30 L 110,40 Q 60,32 10,42 Z" fill={c3} />
-            <path d="M -10,48 Q 20,42 65,52 T 110,46 L 110,58 Q 50,48 0,58 Z" fill={c4} />
-          </svg>
-        );
-      }
-
-      if (style === 'grid') {
-        // Desert Night Camo grid shader
-        return (
-          <svg className="w-full h-full object-cover" viewBox="0 0 100 60">
-            <rect width="100" height="60" fill={c1} />
-            <defs>
-              <pattern id="dncGrid" width="6" height="6" patternUnits="userSpaceOnUse">
-                <rect width="6" height="6" fill="none" stroke={c2} strokeWidth="0.5" />
-                <circle cx="3" cy="3" r="0.8" fill={c3} />
-              </pattern>
-            </defs>
-            <rect width="100" height="60" fill="url(#dncGrid)" />
-          </svg>
-        );
-      }
-
-      // Default Organic Woodland / MultiCam / Alpenflage shader
-      return (
-        <svg className="w-full h-full object-cover" viewBox="0 0 100 60" preserveAspectRatio="none">
-          <rect width="100" height="60" fill={c1} />
-          <path d="M 10,5 Q 35,20 20,40 Q 45,55 70,45 Q 90,30 80,10 Z" fill={c2} />
-          <path d="M 60,25 Q 85,35 75,55 Q 50,60 35,45 Q 40,25 60,25 Z" fill={c3} />
-          <circle cx="25" cy="20" r="7" fill={c4} />
-          <circle cx="75" cy="45" r="8" fill={c4} />
-          <circle cx="50" cy="12" r="5" fill={c4} />
-        </svg>
-      );
-    }
 
     // ==========================================
     // MAIN APP
@@ -997,21 +878,21 @@
                   />
                   <GameCard 
                     title="Camo & Uniforms" 
-                    desc="Classified visual identification. Spot military camouflage swatches"
+                    desc="Classified visual identification. Spot real military camouflage fabrics"
                     icon="🪖" 
-                    tag="Visual Shaders"
+                    tag="Photo Recon"
                     onClick={() => selectGame('camo')}
                   />
                   <GameCard 
                     title="Warbirds & Aircraft" 
-                    desc="Classified air recon. Identify combat aircraft by schematics and specs"
+                    desc="Classified air recon. Identify combat aircraft by real photographs"
                     icon="✈️" 
-                    tag="20 Aircraft"
+                    tag="20 Warbirds"
                     onClick={() => selectGame('aircraft')}
                   />
                   <GameCard 
                     title="Firearms & Rifles" 
-                    desc="Armory inspection. Service rifles, bullpups & snipers by caliber"
+                    desc="Armory inspection. Service rifles, bullpups & snipers by real photos"
                     icon="🎯" 
                     tag="20 Weapons"
                     onClick={() => selectGame('weapons')}
@@ -1109,7 +990,7 @@
     }
 
     // ==========================================
-    // 1. CAMO & UNIFORM SPOTTER (Fixed: No Spoilers + Zero-Fail Shaders)
+    // 1. CAMO & UNIFORM SPOTTER (Real Photo Swatches + No Spoilers)
     // ==========================================
     function CamoSpotter({ role, offset, sendData, connRef, addPoint }) {
       const [roundIdx, setRoundIdx] = useState(0);
@@ -1162,9 +1043,14 @@
             <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Target {roundIdx + 1} of {CAMO_ROUNDS.length}</span>
           </div>
 
-          {/* Visual Procedural Camouflage Shader (Always Loads Perfectly) */}
-          <div className="relative w-full h-56 bg-slate-950 rounded-2xl overflow-hidden border-2 border-slate-700 shadow-2xl group">
-            <CamoShader item={cur} />
+          {/* Real Photo Camouflage Swatch */}
+          <div className="relative w-full h-64 bg-slate-950 rounded-2xl overflow-hidden border-2 border-slate-700 shadow-2xl group">
+            <img 
+              src={cur.img} 
+              alt="Camouflage Fabric"
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover filter contrast-110 group-hover:scale-105 transition duration-300"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none"></div>
 
             {/* Anti-Spoiler Badge: Only show name AFTER answering */}
@@ -1226,7 +1112,7 @@
     }
 
     // ==========================================
-    // 2. RECON: COMBAT AIRCRAFT (Anti-Spoiler + Schematics)
+    // 2. RECON: COMBAT AIRCRAFT (Real Photos + No Origin Spoilers)
     // ==========================================
     function AircraftRecon({ role, offset, sendData, connRef, addPoint }) {
       const [roundIdx, setRoundIdx] = useState(0);
@@ -1279,16 +1165,19 @@
             <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Target {roundIdx + 1} of {AIRCRAFT_ROUNDS.length}</span>
           </div>
 
-          {/* Technical Flight Recon Silhouette Blueprint */}
-          <div className="relative w-full h-52 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex flex-col items-center justify-center p-6 shadow-inner">
-            <div className="w-20 h-20 rounded-full border-2 border-dashed border-indigo-500/40 flex items-center justify-center animate-pulse">
-              <span className="text-5xl">✈️</span>
-            </div>
-            <div className="absolute top-3 left-3 bg-slate-900/90 border border-slate-800 px-2.5 py-1 rounded-lg text-[10px] font-mono text-emerald-400">
+          {/* Real Photo Warbird Display */}
+          <div className="relative w-full h-64 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center shadow-inner group">
+            <img 
+              src={cur.img} 
+              alt="Combat Aircraft"
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover filter contrast-105 group-hover:scale-105 transition duration-300"
+            />
+            <div className="absolute top-3 right-3 bg-slate-950/80 backdrop-blur-md border border-slate-800 px-2.5 py-1 rounded-lg text-[10px] font-mono text-emerald-400">
               Role: {cur.role}
             </div>
-            <div className="absolute top-3 right-3 bg-slate-900/90 border border-slate-800 px-2.5 py-1 rounded-lg text-[10px] font-mono text-slate-300">
-              Origin: {cur.origin}
+            <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md border border-slate-800 px-2.5 py-1 rounded-lg text-[10px] font-mono text-slate-200">
+              {resolved ? cur.name : `Classified Airframe #${roundIdx + 1}`}
             </div>
           </div>
 
@@ -1343,7 +1232,7 @@
     }
 
     // ==========================================
-    // 3. RECON: FIREARMS & RIFLES (Anti-Spoiler + Schematics)
+    // 3. RECON: FIREARMS & RIFLES (Real Photos + No Origin Spoilers)
     // ==========================================
     function WeaponsRecon({ role, offset, sendData, connRef, addPoint }) {
       const [roundIdx, setRoundIdx] = useState(0);
@@ -1396,16 +1285,19 @@
             <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Weapon {roundIdx + 1} of {WEAPON_ROUNDS.length}</span>
           </div>
 
-          {/* Technical Armory Silhouette Schematics */}
-          <div className="relative w-full h-48 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex flex-col items-center justify-center p-6 shadow-inner">
-            <div className="text-6xl mb-2">🎯</div>
-            <div className="flex gap-2">
-              <span className="text-xs font-mono font-bold text-amber-400 bg-amber-400/10 px-3 py-1 rounded-lg border border-amber-400/20">
-                Caliber: {cur.caliber}
-              </span>
-              <span className="text-xs font-mono text-slate-300 bg-slate-900 px-3 py-1 rounded-lg border border-slate-800">
-                Origin: {cur.origin}
-              </span>
+          {/* Real Photo Weapon Profile Display */}
+          <div className="relative w-full h-56 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center p-3 shadow-inner">
+            <img 
+              src={cur.img} 
+              alt="Weapon Profile"
+              referrerPolicy="no-referrer"
+              className="max-w-full max-h-full object-contain filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)]"
+            />
+            <div className="absolute top-3 right-3 bg-amber-400/10 border border-amber-400/20 text-amber-300 px-3 py-1 rounded-xl text-xs font-mono font-bold">
+              Caliber: {cur.caliber}
+            </div>
+            <div className="absolute top-3 left-3 bg-slate-900/90 border border-slate-800 text-slate-300 px-3 py-1 rounded-xl text-xs font-mono font-bold">
+              {resolved ? cur.name : `Classified Armory #${roundIdx + 1}`}
             </div>
           </div>
 
