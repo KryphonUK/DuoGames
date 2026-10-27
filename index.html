@@ -52,6 +52,43 @@
       return Math.round(R * c);
     }
 
+    // --- BULLETPROOF IMAGE COMPONENT (Bypasses Hotlink & Firewall Blocks) ---
+    function ProxyImage({ src, alt, className }) {
+      const getUrl = (rawUrl, step) => {
+        if (!rawUrl) return '';
+        const encoded = encodeURIComponent(rawUrl);
+        if (step === 0) return `https://wsrv.nl/?url=${encoded}&w=800&output=jpg`;
+        if (step === 1) return `https://images.weserv.nl/?url=${encoded}&w=800`;
+        return rawUrl;
+      };
+
+      const [step, setStep] = useState(0);
+      const [currentSrc, setCurrentSrc] = useState(getUrl(src, 0));
+
+      useEffect(() => {
+        setStep(0);
+        setCurrentSrc(getUrl(src, 0));
+      }, [src]);
+
+      const handleError = () => {
+        if (step < 2) {
+          const next = step + 1;
+          setStep(next);
+          setCurrentSrc(getUrl(src, next));
+        }
+      };
+
+      return (
+        <img 
+          src={currentSrc} 
+          alt={alt}
+          onError={handleError}
+          className={className}
+          loading="eager"
+        />
+      );
+    }
+
     // ==========================================
     // 1. 50 GEOGUESS LANDMARKS
     // ==========================================
@@ -178,7 +215,7 @@
       {
         pattern: "EMR / Digital Flora",
         nation: "Russia",
-        clue: "Dense micro-pixelated dark green and black camouflage introduced with the modern Ratnik combat equipment system.",
+        clue: "Dense micro-pixelated dark green and black camouflage introduced with modern military equipment.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/EMR_camo_sample.jpg/800px-EMR_camo_sample.jpg",
         options: ["Russia", "Ukraine", "Belarus", "Kazakhstan"]
       },
@@ -234,14 +271,14 @@
       {
         pattern: "Greek Lizard",
         nation: "Greece",
-        clue: "Horizontal brushstrokes derivative of TAP 47 lizard pattern, optimized for Mediterranean rocky brush.",
+        clue: "Horizontal brushstrokes derivative of early lizard patterns, optimized for Mediterranean rocky brush.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Greek_lizard_camo.jpg/800px-Greek_lizard_camo.jpg",
         options: ["Greece", "Turkey", "Cyprus", "Italy"]
       },
       {
         pattern: "Taz 90",
         nation: "Switzerland",
-        clue: "Modern 4-color woodland variant that replaced the red-tinted mountain camouflage across canton units.",
+        clue: "Modern 4-color woodland variant that replaced red-tinted mountain camouflage across canton units.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Taz_90_camo.jpg/800px-Taz_90_camo.jpg",
         options: ["Switzerland", "Germany", "Austria", "Liechtenstein"]
       },
@@ -260,6 +297,7 @@
     const AIRCRAFT_ROUNDS = [
       {
         name: "A-10 Thunderbolt II",
+        origin: "USA",
         role: "Close Air Support & Tank Buster",
         spec: "Armed with a 30mm GAU-8/A Avenger rotary cannon; twin high-bypass turbofan engines mounted high above the fuselage.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/A-10_Thunderbolt_II_in-flight.jpg/800px-A-10_Thunderbolt_II_in-flight.jpg",
@@ -267,6 +305,7 @@
       },
       {
         name: "SR-71 Blackbird",
+        origin: "USA (Skunk Works)",
         role: "Strategic Reconnaissance",
         spec: "Capable of Mach 3.3+ and cruising above 85,000 feet; constructed primarily from heat-treated titanium alloy.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Lockheed_SR-71_Blackbird.jpg/800px-Lockheed_SR-71_Blackbird.jpg",
@@ -274,6 +313,7 @@
       },
       {
         name: "B-2 Spirit",
+        origin: "USA",
         role: "Stealth Strategic Heavy Bomber",
         spec: "Flying-wing design with continuous-curvature radar absorption skin and zero vertical tail fins.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/B-2_Spirit_original.jpg/800px-B-2_Spirit_original.jpg",
@@ -281,6 +321,7 @@
       },
       {
         name: "F-22 Raptor",
+        origin: "USA",
         role: "5th-Gen Air Superiority Fighter",
         spec: "Supercruise without afterburners, 2D thrust-vectoring nozzles, and all-aspect stealth shaping.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/F-22_Raptor_edit1.jpg/800px-F-22_Raptor_edit1.jpg",
@@ -288,6 +329,7 @@
       },
       {
         name: "Supermarine Spitfire",
+        origin: "United Kingdom",
         role: "WWII Interceptor Fighter",
         spec: "Famed elliptical wings, liquid-cooled V12 engine, and high turning performance during 1940 dogfights.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Spitfire_Mark_I_K9942.jpg/800px-Spitfire_Mark_I_K9942.jpg",
@@ -295,6 +337,7 @@
       },
       {
         name: "F-14 Tomcat",
+        origin: "USA",
         role: "Carrier-based Supersonic Interceptor",
         spec: "Variable-sweep swing wings, twin vertical tails, and long-range AIM-54 Phoenix missile integration.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/F-14A_Tomcat_VF-142.jpg/800px-F-14A_Tomcat_VF-142.jpg",
@@ -302,6 +345,7 @@
       },
       {
         name: "F-35 Lightning II",
+        origin: "USA / Allied Consortium",
         role: "5th-Gen Multi-Role Stealth Fighter",
         spec: "Electro-optical targeting system, helmet-mounted 360-degree vision, and STOVL lift-fan variant capabilities.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/F-35A_flight_(cropped).jpg/800px-F-35A_flight_(cropped).jpg",
@@ -309,6 +353,7 @@
       },
       {
         name: "B-52 Stratofortress",
+        origin: "USA",
         role: "Long-Range Strategic Heavy Bomber",
         spec: "Eight turbojet engines mounted in four underwing twin-pods; continuous frontline service since the 1950s.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/B-52_Stratofortress_assigned_to_the_307th_Bomb_Wing.jpg/800px-B-52_Stratofortress_assigned_to_the_307th_Bomb_Wing.jpg",
@@ -316,6 +361,7 @@
       },
       {
         name: "AH-64 Apache",
+        origin: "USA",
         role: "Heavy Attack Helicopter",
         spec: "Twin turboshaft engines, nose-mounted 30mm chain gun, and AGM-114 laser-guided anti-tank missiles.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Boeing_AH-64D_Apache_Longbow.jpg/800px-Boeing_AH-64D_Apache_Longbow.jpg",
@@ -323,6 +369,7 @@
       },
       {
         name: "F-117 Nighthawk",
+        origin: "USA (Skunk Works)",
         role: "Stealth Ground Attack Aircraft",
         spec: "Faceted flat surface panels designed to deflect radar signals away from receiver dishes.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/F-117_Nighthawk_Front.jpg/800px-F-117_Nighthawk_Front.jpg",
@@ -330,6 +377,7 @@
       },
       {
         name: "P-51 Mustang",
+        origin: "USA",
         role: "Long-Range WWII Escort Fighter",
         spec: "Laminar flow wings, belly radiator scoop, bubble canopy, and drop-tank extended escort radius.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/P-51_Mustang_edit1.jpg/800px-P-51_Mustang_edit1.jpg",
@@ -337,6 +385,7 @@
       },
       {
         name: "Eurofighter Typhoon",
+        origin: "UK / Germany / Italy / Spain",
         role: "Multirole Canard-Delta Fighter",
         spec: "Foreplane canards, delta wing layout, twin turbofans, and exceptional supersonic turn agility.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Eurofighter_Typhoon_RAF.jpg/800px-Eurofighter_Typhoon_RAF.jpg",
@@ -344,6 +393,7 @@
       },
       {
         name: "AC-130 Gunship",
+        origin: "USA",
         role: "Heavy Ground Support Attack Aircraft",
         spec: "Heavy transport airframe equipped with side-firing 105mm artillery howitzer and automated cannons.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/AC-130_Gunship.jpg/800px-AC-130_Gunship.jpg",
@@ -351,6 +401,7 @@
       },
       {
         name: "F-15 Eagle",
+        origin: "USA",
         role: "All-Weather Tactical Air Superiority",
         spec: "Twin turbofans, large bubble canopy, and a combat air-to-air record of over 104 victories with zero shootdowns.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/F-15_Eagle_in_flight.jpg/800px-F-15_Eagle_in_flight.jpg",
@@ -358,6 +409,7 @@
       },
       {
         name: "Messerschmitt Bf 109",
+        origin: "Germany",
         role: "WWII Fighter & Interceptor",
         spec: "Inverted-V12 liquid-cooled engine, narrow-track gear retracting outward, and centerline engine cannon.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Messerschmitt_Bf_109G-6.jpg/800px-Messerschmitt_Bf_109G-6.jpg",
@@ -365,6 +417,7 @@
       },
       {
         name: "U-2 Dragon Lady",
+        origin: "USA",
         role: "Ultra-High Altitude Reconnaissance",
         spec: "Glider-like high-aspect wingspan operating at 70,000+ feet; pilot operates in a pressurized spacesuit.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Lockheed_U-2.jpg/800px-Lockheed_U-2.jpg",
@@ -372,6 +425,7 @@
       },
       {
         name: "Dassault Rafale",
+        origin: "France",
         role: "Omnirole Combat Aircraft",
         spec: "Close-coupled canard delta wing, twin engines, radar-evasive shaping, and carrier catapult launch capability.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Dassault_Rafale_C.jpg/800px-Dassault_Rafale_C.jpg",
@@ -379,6 +433,7 @@
       },
       {
         name: "MiG-29 Fulcrum",
+        origin: "Soviet Union",
         role: "Air Superiority / Tactical Fighter",
         spec: "Widely spaced dual turbofans, blended wing-body root extensions, and helmet-mounted cueing sight.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/MiG-29_flight.jpg/800px-MiG-29_flight.jpg",
@@ -386,6 +441,7 @@
       },
       {
         name: "AV-8B Harrier II",
+        origin: "United Kingdom / USA",
         role: "V/STOL Jump Jet Strike Aircraft",
         spec: "Vectored-thrust turbofan with four rotating exhaust nozzles enabling stationary hover and vertical landing.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/AV-8B_Harrier_II.jpg/800px-AV-8B_Harrier_II.jpg",
@@ -393,6 +449,7 @@
       },
       {
         name: "Su-57 Felon",
+        origin: "Russia",
         role: "5th-Gen Multirole Stealth Fighter",
         spec: "Blended wing-body fuselage with 3D thrust-vectoring engines, levcons, and tandem internal weapons bays.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Sukhoi_Su-57_in_flight.jpg/800px-Sukhoi_Su-57_in_flight.jpg",
@@ -406,6 +463,7 @@
     const WEAPON_ROUNDS = [
       {
         name: "AK-47 / AKM",
+        origin: "Soviet Union",
         caliber: "7.62x39mm",
         spec: "Long-stroke gas piston, rotating bolt, stamped receiver, curved steel magazine, legendary reliability in mud and sand.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/AK-47_type_II_noBG.png/800px-AK-47_type_II_noBG.png",
@@ -413,6 +471,7 @@
       },
       {
         name: "M4A1 Carbine",
+        origin: "USA",
         caliber: "5.56x45mm NATO",
         spec: "Direct impingement gas system, collapsible stock, Picatinny flat-top upper receiver; widespread frontline military carbine.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/PEO_M4_Carbine_RAS_M68CCO_grip.jpg/800px-PEO_M4_Carbine_RAS_M68CCO_grip.jpg",
@@ -420,6 +479,7 @@
       },
       {
         name: "Steyr AUG",
+        origin: "Austria",
         caliber: "5.56x45mm NATO",
         spec: "Pioneering bullpup configuration with firing action behind trigger, translucent magazine, and integrated optical scope.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Steyr_AUG_A1_508mm_04.jpg/800px-Steyr_AUG_A1_508mm_04.jpg",
@@ -427,6 +487,7 @@
       },
       {
         name: "FN P90",
+        origin: "Belgium",
         caliber: "5.7x28mm Armor-Piercing",
         spec: "Compact ambidextrous PDW with unique horizontal top-mounted 50-round translucent magazine and downward ejection.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/FN_P90.jpg/800px-FN_P90.jpg",
@@ -434,6 +495,7 @@
       },
       {
         name: "Barrett M82",
+        origin: "USA",
         caliber: ".50 BMG (12.7x99mm)",
         spec: "Semi-automatic anti-materiel sniper rifle with short-recoil operation, fluted barrel, and arrowhead dual-chamber brake.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Barrett_M82A1.jpg/800px-Barrett_M82A1.jpg",
@@ -441,6 +503,7 @@
       },
       {
         name: "HK MP5",
+        origin: "Germany",
         caliber: "9x19mm Parabellum",
         spec: "Roller-delayed blowback closed-bolt submachine gun favored worldwide by elite counter-terror and tactical SWAT units.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/HK_MP5_noBG.png/800px-HK_MP5_noBG.png",
@@ -448,6 +511,7 @@
       },
       {
         name: "Karabiner 98k",
+        origin: "Germany",
         caliber: "7.92x57mm Mauser",
         spec: "Controlled-feed bolt-action military service rifle with internal 5-round stripper clip magazine; standard WWII infantry arm.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Mauser_Kar_98k.jpg/800px-Mauser_Kar_98k.jpg",
@@ -455,6 +519,7 @@
       },
       {
         name: "FN SCAR-H",
+        origin: "Belgium / USA",
         caliber: "7.62x51mm NATO (.308)",
         spec: "Short-stroke gas piston battle rifle featuring monolithic aluminum receiver, reciprocating handle, and folding modular stock.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/FN_SCAR-L_-_USA.jpg/800px-FN_SCAR-L_-_USA.jpg",
@@ -462,6 +527,7 @@
       },
       {
         name: "SA80 / L85A2",
+        origin: "United Kingdom",
         caliber: "5.56x45mm NATO",
         spec: "Bullpup infantry rifle featuring stamped steel receiver, short-stroke gas piston, and SUSAT/ACOG optical sights.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/L85A2_fitted_with_ACOG_Sight.jpg/800px-L85A2_fitted_with_ACOG_Sight.jpg",
@@ -469,6 +535,7 @@
       },
       {
         name: "FAMAS F1",
+        origin: "France",
         caliber: "5.56x45mm NATO",
         spec: "Lever-delayed blowback bullpup rifle nicknamed 'The Bugle' due to its elevated top carry handle.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/FAMAS_F1_no_background.png/800px-FAMAS_F1_no_background.png",
@@ -476,6 +543,7 @@
       },
       {
         name: "Dragunov SVD",
+        origin: "Soviet Union",
         caliber: "7.62x54mmR",
         spec: "Semi-automatic designated marksman rifle featuring skeletonized wooden thumbhole stock and side-mounted PSO-1 scope.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/SVD_Dragunov_with_PSO-1.jpg/800px-SVD_Dragunov_with_PSO-1.jpg",
@@ -483,6 +551,7 @@
       },
       {
         name: "M1 Garand",
+        origin: "USA",
         caliber: ".30-06 Springfield",
         spec: "First semi-automatic rifle standard-issued to infantry; renowned for metallic 'ping' sound when en-bloc clip ejects.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/M1_Garand_rifle_cartridge.png/800px-M1_Garand_rifle_cartridge.png",
@@ -490,6 +559,7 @@
       },
       {
         name: "HK G3",
+        origin: "Germany",
         caliber: "7.62x51mm NATO",
         spec: "Cold War battle rifle utilizing roller-delayed blowback mechanism and fluted chamber; served with 40+ armed forces.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Gewehr_G3A3.jpg/800px-Gewehr_G3A3.jpg",
@@ -497,6 +567,7 @@
       },
       {
         name: "FN FAL",
+        origin: "Belgium",
         caliber: "7.62x51mm NATO",
         spec: "Short-stroke gas-operated battle rifle widely nicknamed 'The Right Arm of the Free World' during the Cold War.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/FN_FAL.png/800px-FN_FAL.png",
@@ -504,6 +575,7 @@
       },
       {
         name: "Kriss Vector",
+        origin: "USA",
         caliber: ".45 ACP / 9mm",
         spec: "Futuristic submachine gun utilizing articulated mechanism that redirects recoil energy downward rather than backward.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Kriss_Vector.jpg/800px-Kriss_Vector.jpg",
@@ -511,6 +583,7 @@
       },
       {
         name: "Benelli M4 (M1014)",
+        origin: "Italy",
         caliber: "12 Gauge Shotgun",
         spec: "Auto-regulating gas-operated (ARGO) semi-automatic combat shotgun adopted by frontline marine and naval boarding teams.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/M1014_Shotgun.jpg/800px-M1014_Shotgun.jpg",
@@ -518,6 +591,7 @@
       },
       {
         name: "Thompson Submachine Gun",
+        origin: "USA",
         caliber: ".45 ACP",
         spec: "Blowback SMG with finned barrel, Cutts compensator, and 50-round drum magazine; nicknamed 'The Chicago Typewriter'.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Thompson_submachine_gun.jpg/800px-Thompson_submachine_gun.jpg",
@@ -525,6 +599,7 @@
       },
       {
         name: "PPSh-41",
+        origin: "Soviet Union",
         caliber: "7.62x25mm Tokarev",
         spec: "Mass-produced stamped sheet-metal WWII submachine gun firing at 1,000 rounds/min, often paired with a 71-round drum.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/PPSh-41.png/800px-PPSh-41.png",
@@ -532,6 +607,7 @@
       },
       {
         name: "CheyTac M200 Intervention",
+        origin: "USA",
         caliber: ".408 CheyTac",
         spec: "Extreme long-range bolt-action sniper rifle system engineered for precision sub-MOA groupings past 2,500 yards.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/CheyTac_M200_Intervention.jpg/800px-CheyTac_M200_Intervention.jpg",
@@ -539,6 +615,7 @@
       },
       {
         name: "Desert Eagle",
+        origin: "USA / Israel",
         caliber: ".50 Action Express",
         spec: "Gas-operated rotating-bolt magnum hand cannon with triangular barrel slide, popular in cinema and gaming lore.",
         img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Desert_Eagle_50_AE.jpg/800px-Desert_Eagle_50_AE.jpg",
@@ -783,7 +860,7 @@
                 <h1 className="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2">
                   DuoGames <span className="text-[10px] uppercase font-bold tracking-widest bg-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-full border border-indigo-500/30">1v1 Showdown</span>
                 </h1>
-                <p className="text-xs text-slate-400">Tactical, geographical, and visual intelligence duels</p>
+                <p className="text-xs text-slate-400">Tactical, geographical, and photo reconnaissance duels</p>
               </div>
             </div>
 
@@ -880,21 +957,21 @@
                     title="Camo & Uniforms" 
                     desc="Classified visual identification. Spot real military camouflage fabrics"
                     icon="🪖" 
-                    tag="Photo Recon"
+                    tag="20 Photo Swatches"
                     onClick={() => selectGame('camo')}
                   />
                   <GameCard 
                     title="Warbirds & Aircraft" 
                     desc="Classified air recon. Identify combat aircraft by real photographs"
                     icon="✈️" 
-                    tag="20 Warbirds"
+                    tag="20 Photo Warbirds"
                     onClick={() => selectGame('aircraft')}
                   />
                   <GameCard 
                     title="Firearms & Rifles" 
                     desc="Armory inspection. Service rifles, bullpups & snipers by real photos"
                     icon="🎯" 
-                    tag="20 Weapons"
+                    tag="20 Photo Weapons"
                     onClick={() => selectGame('weapons')}
                   />
                   <GameCard 
@@ -1043,12 +1120,11 @@
             <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Target {roundIdx + 1} of {CAMO_ROUNDS.length}</span>
           </div>
 
-          {/* Real Photo Camouflage Swatch */}
+          {/* Real Photo Camouflage Swatch with Firewall Proxy */}
           <div className="relative w-full h-64 bg-slate-950 rounded-2xl overflow-hidden border-2 border-slate-700 shadow-2xl group">
-            <img 
+            <ProxyImage 
               src={cur.img} 
               alt="Camouflage Fabric"
-              referrerPolicy="no-referrer"
               className="w-full h-full object-cover filter contrast-110 group-hover:scale-105 transition duration-300"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none"></div>
@@ -1165,12 +1241,11 @@
             <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Target {roundIdx + 1} of {AIRCRAFT_ROUNDS.length}</span>
           </div>
 
-          {/* Real Photo Warbird Display */}
+          {/* Real Photo Warbird Display with Firewall Proxy */}
           <div className="relative w-full h-64 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center shadow-inner group">
-            <img 
+            <ProxyImage 
               src={cur.img} 
               alt="Combat Aircraft"
-              referrerPolicy="no-referrer"
               className="w-full h-full object-cover filter contrast-105 group-hover:scale-105 transition duration-300"
             />
             <div className="absolute top-3 right-3 bg-slate-950/80 backdrop-blur-md border border-slate-800 px-2.5 py-1 rounded-lg text-[10px] font-mono text-emerald-400">
@@ -1214,9 +1289,9 @@
             <div className="space-y-4 pt-2">
               <div className="text-center text-xs font-bold">
                 {myPick === cur.name ? (
-                  <span className="text-emerald-400">✓ Target Confirmed: {cur.name}!</span>
+                  <span className="text-emerald-400">✓ Target Confirmed: {cur.name}! (Origin: {cur.origin})</span>
                 ) : (
-                  <span className="text-rose-400">✗ Negative! Correct aircraft: {cur.name}</span>
+                  <span className="text-rose-400">✗ Negative! Correct aircraft: {cur.name} (Origin: {cur.origin})</span>
                 )}
               </div>
               <button 
@@ -1285,12 +1360,11 @@
             <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Weapon {roundIdx + 1} of {WEAPON_ROUNDS.length}</span>
           </div>
 
-          {/* Real Photo Weapon Profile Display */}
+          {/* Real Photo Weapon Profile Display with Firewall Proxy */}
           <div className="relative w-full h-56 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center p-3 shadow-inner">
-            <img 
+            <ProxyImage 
               src={cur.img} 
               alt="Weapon Profile"
-              referrerPolicy="no-referrer"
               className="max-w-full max-h-full object-contain filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)]"
             />
             <div className="absolute top-3 right-3 bg-amber-400/10 border border-amber-400/20 text-amber-300 px-3 py-1 rounded-xl text-xs font-mono font-bold">
@@ -1334,9 +1408,9 @@
             <div className="space-y-4 pt-2">
               <div className="text-center text-xs font-bold">
                 {myPick === cur.name ? (
-                  <span className="text-emerald-400">✓ Correct Identification: {cur.name}!</span>
+                  <span className="text-emerald-400">✓ Correct Identification: {cur.name}! (Origin: {cur.origin})</span>
                 ) : (
-                  <span className="text-rose-400">✗ Misfire! Correct weapon was: {cur.name}</span>
+                  <span className="text-rose-400">✗ Misfire! Correct weapon was: {cur.name} (Origin: {cur.origin})</span>
                 )}
               </div>
               <button 
@@ -1428,10 +1502,9 @@
             onClick={handleMapClick}
             className="relative w-full aspect-[2/1] bg-slate-950 rounded-2xl border-2 border-slate-700/80 overflow-hidden cursor-crosshair shadow-2xl"
           >
-            <img 
+            <ProxyImage 
               src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Equirectangular_projection_SW.jpg/1280px-Equirectangular_projection_SW.jpg"
               alt="World Map"
-              referrerPolicy="no-referrer"
               className="w-full h-full object-fill pointer-events-none filter brightness-90 contrast-110 saturate-125"
             />
 
