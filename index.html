@@ -52,42 +52,63 @@
       return Math.round(R * c);
     }
 
-    // --- BULLETPROOF MULTI-TIER IMAGE COMPONENT ---
+    // --- 3-TIER FAILSAFE IMAGE PIPELINE ---
     function FailsafeImage({ url, alt, className }) {
-      const buildChain = (primary) => {
+      const getFallbacks = (primary) => {
         if (!primary) return [];
-        const chain = [primary];
-        // Mirror on upload.wikimedia.org
-        if (primary.includes('thumb.wikimedia.org')) {
-          chain.push(primary.replace('thumb.wikimedia.org', 'upload.wikimedia.org'));
+        const list = [primary];
+        // 1. Raw unscaled Wikimedia Commons link
+        if (primary.includes('/thumb/')) {
+          const parts = primary.split('/thumb/');
+          if (parts.length === 2) {
+            const sub = parts[1].split('/');
+            if (sub.length >= 3) {
+              const d1 = sub[0];
+              const d2 = sub[1];
+              const fn = sub[2];
+              list.push(`https://upload.wikimedia.org/wikipedia/commons/${d1}/${d2}/${fn}`);
+            }
+          }
         }
-        // Cloudflare WSrv proxy mirror
-        chain.push(`https://wsrv.nl/?url=${encodeURIComponent(primary)}&output=jpg`);
-        // WeServ secondary mirror
-        chain.push(`https://images.weserv.nl/?url=${encodeURIComponent(primary)}&output=jpg`);
-        return chain;
+        // 2. Cloudflare global edge mirror
+        list.push(`https://wsrv.nl/?url=${encodeURIComponent(primary)}&output=jpg`);
+        return list;
       };
 
-      const [sources, setSources] = useState(buildChain(url));
+      const [sources, setSources] = useState(getFallbacks(url));
       const [idx, setIdx] = useState(0);
+      const [failedAll, setFailedAll] = useState(false);
 
       useEffect(() => {
-        setSources(buildChain(url));
+        setSources(getFallbacks(url));
         setIdx(0);
+        setFailedAll(false);
       }, [url]);
 
-      const handleError = () => {
+      const handleErr = () => {
         if (idx < sources.length - 1) {
           setIdx(i => i + 1);
+        } else {
+          setFailedAll(true);
         }
       };
+
+      if (failedAll) {
+        return (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-slate-950 p-4 text-center">
+            <span className="text-4xl mb-2">📷</span>
+            <span className="text-xs text-slate-400 font-mono tracking-wider">Visual Intel Classified</span>
+            <span className="text-[10px] text-slate-600 mt-1">Identify using role, caliber & tactical specs</span>
+          </div>
+        );
+      }
 
       return (
         <img 
           src={sources[idx]} 
           alt={alt}
           referrerPolicy="no-referrer"
-          onError={handleError}
+          onError={handleErr}
           className={className}
           loading="eager"
         />
@@ -95,7 +116,7 @@
     }
 
     // ==========================================
-    // 1. 25 GEOGUESS LANDMARKS
+    // 1. GEOGUESS LANDMARKS
     // ==========================================
     const GEO_ROUNDS = [
       { name: "Statue of Liberty (New York)", x: 29.4, y: 27.4, hint: "East Coast harbor, USA" },
@@ -126,97 +147,83 @@
     ];
 
     // ==========================================
-    // 2. 20 MILITARY CAMOUFLAGE (Direct Wikipedia CDN Links + No Spoilers)
+    // 2. 20 MILITARY CAMOUFLAGE (Direct Wikipedia CDN Links + Zero Spoilers)
     // ==========================================
     const CAMO_ROUNDS = [
       {
         pattern: "AOR-1 (NWU Type II)",
         nation: "United States",
-        clue: "Digital desert pattern developed for arid warfare and adopted by naval special warfare units.",
+        clue: "Digital desert camouflage pattern developed for special warfare units in arid environments.",
         img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/84/Navy_Working_Uniform_%28NWU%29_Type_III_camouflage_pattern_swatch%2C_AOR-1.png/960px-Navy_Working_Uniform_%28NWU%29_Type_III_camouflage_pattern_swatch%2C_AOR-1.png",
-        options: ["United States", "Israel", "Australia", "United Kingdom"]
+        options: ["United States", "Australia", "United Kingdom", "Israel"]
       },
       {
-        pattern: "AOR-2 (NWU Type III)",
-        nation: "United States",
-        clue: "Dense digital woodland pattern using green, tan, and black pixels for maritime and coastal foliage.",
-        img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/08/NWU_Type_III_camouflage_pattern_swatch%2C_AOR_2.jpg/960px-NWU_Type_III_camouflage_pattern_swatch%2C_AOR_2.jpg",
-        options: ["United States", "Canada", "Norway", "France"]
-      },
-      {
-        pattern: "A-TACS FG",
-        nation: "United States",
-        clue: "Advanced tactical concealment system using micro and macro organic foliage green color-matching blobs.",
-        img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3c/A-TACS_FG.jpg/960px-A-TACS_FG.jpg",
-        options: ["United States", "Russia", "Peru", "South Africa"]
-      },
-      {
-        pattern: "CADPAT AR",
-        nation: "Canada",
-        clue: "Computerized digital arid pattern replacing green foliage pixels with three distinct high-contrast desert tones.",
-        img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/85/CADPAT_AR.jpg/960px-CADPAT_AR.jpg",
-        options: ["Canada", "Norway", "Denmark", "Australia"]
+        pattern: "Splittertarnmuster",
+        nation: "Germany",
+        clue: "Geometric jagged splinter pattern with distinctive raindrop directional brushstrokes.",
+        img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d0/Splittertarnmuster.jpg/960px-Splittertarnmuster.jpg",
+        options: ["Germany", "Sweden", "Poland", "Finland"]
       },
       {
         pattern: "Flecktarn",
         nation: "Germany",
-        clue: "5-color disruptive pea-dot pattern composed of dark green, light green, black, red-brown, and olive.",
+        clue: "5-color disruptive pea-dot pattern composed of green, black, red-brown, and olive spots.",
         img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/96/Flecktarn_Muster.jpg/960px-Flecktarn_Muster.jpg",
         options: ["Germany", "Switzerland", "Austria", "Netherlands"]
       },
       {
         pattern: "M81 Woodland",
         nation: "United States",
-        clue: "High-contrast 4-color pattern (sand, brown, green, black) widely copied by dozens of armed forces.",
+        clue: "Classic 4-color high-contrast curved pattern (green, brown, sand, black) copied across the world.",
         img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a1/M81_Woodland_camo_pattern.png/960px-M81_Woodland_camo_pattern.png",
         options: ["United States", "France", "Spain", "Poland"]
       },
       {
-        pattern: "MARPAT Desert",
-        nation: "United States Marine Corps",
-        clue: "Digital pixelated camouflage containing tiny embedded branch insignias, issued to naval infantry.",
-        img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/25/MARPAT_desert_camouflage_swatch%2C_24.55%22.jpg/960px-MARPAT_desert_camouflage_swatch%2C_24.55%22.jpg",
-        options: ["United States Marine Corps", "British Royal Marines", "Russian Naval Infantry", "French Foreign Legion"]
+        pattern: "Desert Night Camo (DNC)",
+        nation: "United States",
+        clue: "Dark green two-color grid with tiny crosshatch spots engineered to disrupt early night-vision optics.",
+        img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b2/DNC_pattern.jpg/960px-DNC_pattern.jpg",
+        options: ["United States", "Israel", "Saudi Arabia", "Kuwait"]
+      },
+      {
+        pattern: "Alpenflage (TAZ 57)",
+        nation: "Switzerland",
+        clue: "High-contrast mountain pattern with bright red and orange patches to blend into alpine scree.",
+        img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/37/Tarnanzug_57_alpenflage.jpg/960px-Tarnanzug_57_alpenflage.jpg",
+        options: ["Switzerland", "Italy", "Austria", "Czech Republic"]
       },
       {
         pattern: "M90 Splinter",
         nation: "Sweden",
-        clue: "Distinct hard-edged geometric polygon camouflage designed for Nordic pine forests and tundra.",
+        clue: "Hard-edged geometric polygon camouflage designed for Scandinavian pine forests and tundra.",
         img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/78/M90_camo.jpg/960px-M90_camo.jpg",
         options: ["Sweden", "Finland", "Estonia", "Japan"]
       },
       {
         pattern: "Tigerstripe",
         nation: "Vietnam War (Special Forces)",
-        clue: "Dense horizontal interlocking brushstrokes developed for close-quarters dense jungle warfare.",
+        clue: "Dense horizontal interlocking brushstrokes designed for close-quarters jungle warfare.",
         img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4f/Tigerstripe_camo.jpg/960px-Tigerstripe_camo.jpg",
         options: ["Vietnam War (Special Forces)", "Rhodesian SAS", "Cuban Troops", "Korean Marines"]
       },
       {
-        pattern: "Alpenflage (TAZ 57)",
-        nation: "Switzerland",
-        clue: "High-contrast alpine pattern with distinctive bright red/orange patches to blend with mountain scree.",
-        img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/37/Tarnanzug_57_alpenflage.jpg/960px-Tarnanzug_57_alpenflage.jpg",
-        options: ["Switzerland", "Italy", "Austria", "Czech Republic"]
-      },
-      {
         pattern: "Desert DPM",
         nation: "United Kingdom",
-        clue: "Distinctive brushstroke desert camouflage issued in 2-colour and 4-colour Middle East deployments.",
+        clue: "Distinctive brushstroke desert pattern issued in 2-colour and 4-colour Middle East deployments.",
         img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c2/DPM_desert.jpg/960px-DPM_desert.jpg",
         options: ["United Kingdom", "Saudi Arabia", "South Africa", "Jordan"]
       },
       {
         pattern: "MultiCam",
         nation: "International Special Ops",
-        clue: "7-color gradient pattern blending browns, khakis, and lime greens across diverse terrain.",
+        clue: "7-color gradient pattern blending greens, browns, and khakis seamlessly across varied environments.",
         img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1a/MultiCam-trans.jpg/960px-MultiCam-trans.jpg",
         options: ["International Special Ops", "Russian VDV", "Swedish Rangers", "IDF"]
       },
       {
         pattern: "EMR / Digital Flora",
         nation: "Russia",
-        clue: "Dense micro-pixelated dark green and black camouflage introduced with modern military combat uniforms.",
+        clue: "Dense micro-pixelated dark green and black camouflage introduced with modern military equipment.",
         img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/72/EMR_camo_sample.jpg/960px-EMR_camo_sample.jpg",
         options: ["Russia", "Ukraine", "Belarus", "Kazakhstan"]
       },
@@ -235,11 +242,32 @@
         options: ["France", "Belgium", "Portugal", "Romania"]
       },
       {
-        pattern: "Desert Night Camo (DNC)",
-        nation: "United States (Desert Storm)",
-        clue: "Dark green two-color grid pattern with tiny crosshatch spots intended to disrupt early night vision optics.",
-        img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b2/DNC_pattern.jpg/960px-DNC_pattern.jpg",
-        options: ["United States (Desert Storm)", "Israel", "Saudi Arabia", "Kuwait"]
+        pattern: "CADPAT AR",
+        nation: "Canada",
+        clue: "Computerized digital arid pattern replacing green foliage pixels with three distinct high-contrast desert tones.",
+        img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/85/CADPAT_AR.jpg/960px-CADPAT_AR.jpg",
+        options: ["Canada", "Norway", "Denmark", "Australia"]
+      },
+      {
+        pattern: "Rhodesian Brushstroke",
+        nation: "Rhodesia",
+        clue: "Distinctive diagonal coarse brushstrokes in dark green and brown over light khaki; iconic bush warfare pattern.",
+        img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7d/Rhodesian_brushstroke_camo.jpg/960px-Rhodesian_brushstroke_camo.jpg",
+        options: ["Rhodesia", "South Africa", "Kenya", "Namibia"]
+      },
+      {
+        pattern: "Jigsaw Camouflage",
+        nation: "Belgium",
+        clue: "Interlocking puzzle-piece shapes in khaki, dark green, and reddish-brown; standard issue for 60+ years.",
+        img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4f/Belgian_Jigsaw_camo.jpg/960px-Belgian_Jigsaw_camo.jpg",
+        options: ["Belgium", "Netherlands", "Luxembourg", "Denmark"]
+      },
+      {
+        pattern: "M05 Military Pattern",
+        nation: "Finland",
+        clue: "Scientifically sampled Scandinavian forest foliage digitally rendered into 4-color micro clusters.",
+        img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f8/Finnish_M05_woodland.jpg/960px-Finnish_M05_woodland.jpg",
+        options: ["Finland", "Sweden", "Norway", "Latvia"]
       },
       {
         pattern: "Wz. 93 Pantera",
@@ -256,13 +284,6 @@
         options: ["Greece", "Turkey", "Cyprus", "Italy"]
       },
       {
-        pattern: "Taz 90",
-        nation: "Switzerland",
-        clue: "Modern 4-color woodland variant that replaced red-tinted mountain camouflage across canton units.",
-        img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cb/Taz_90_camo.jpg/960px-Taz_90_camo.jpg",
-        options: ["Switzerland", "Germany", "Austria", "Liechtenstein"]
-      },
-      {
         pattern: "Mitchell Pattern / Cloud",
         nation: "United States (USMC 1960s)",
         clue: "Reversible helmet cover pattern featuring lush overlapping green leaves on one side and brown clouds on reverse.",
@@ -272,7 +293,7 @@
     ];
 
     // ==========================================
-    // 3. 20 COMBAT AIRCRAFT (Direct Wikipedia CDN Links + No Spoilers)
+    // 3. 20 COMBAT AIRCRAFT (Direct Wikipedia CDN Links + Zero Spoilers)
     // ==========================================
     const AIRCRAFT_ROUNDS = [
       {
@@ -438,7 +459,7 @@
     ];
 
     // ==========================================
-    // 4. 20 FIREARMS & RIFLES (Direct Wikipedia CDN Links + No Spoilers)
+    // 4. 20 FIREARMS & RIFLES (Direct Wikipedia CDN Links + Zero Spoilers)
     // ==========================================
     const WEAPON_ROUNDS = [
       {
@@ -1007,7 +1028,7 @@
     }
 
     // ==========================================
-    // 1. CAMO & UNIFORM SPOTTER (Direct CDN Photos + No Spoilers)
+    // 1. CAMO & UNIFORM SPOTTER (Direct CDN Photos + Zero Spoilers)
     // ==========================================
     function CamoSpotter({ role, offset, sendData, connRef, addPoint }) {
       const [roundIdx, setRoundIdx] = useState(0);
@@ -1128,7 +1149,7 @@
     }
 
     // ==========================================
-    // 2. RECON: COMBAT AIRCRAFT (Direct CDN Photos + No Spoilers)
+    // 2. RECON: COMBAT AIRCRAFT (Direct CDN Photos + Zero Spoilers)
     // ==========================================
     function AircraftRecon({ role, offset, sendData, connRef, addPoint }) {
       const [roundIdx, setRoundIdx] = useState(0);
@@ -1247,7 +1268,7 @@
     }
 
     // ==========================================
-    // 3. RECON: FIREARMS & RIFLES (Direct CDN Photos + No Spoilers)
+    // 3. RECON: FIREARMS & RIFLES (Direct CDN Photos + Zero Spoilers)
     // ==========================================
     function WeaponsRecon({ role, offset, sendData, connRef, addPoint }) {
       const [roundIdx, setRoundIdx] = useState(0);
