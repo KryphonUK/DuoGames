@@ -1,25 +1,1008 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Office Games 1v1</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & Babel for in-browser JSX compiling -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  </head>
-  <body class="bg-slate-900 text-white min-h-screen">
-    <div id="root"></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DuoGames - 1v1 Office Showdown</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React 18 & Babel Standalone (No Node.js or build steps required) -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- PeerJS for Free Real-Time Multiplayer across computers -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white">
+  <div id="root"></div>
 
-    <script type="text/babel">
-      // PASTE YOUR APP.JSX CODE HERE
-      // (Remove any top-level "import React from 'react'" lines)
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // --- SOUND EFFECTS (Synthesized via Web Audio API, no external audio files needed) ---
+    const playTone = (freq = 440, type = 'sine', duration = 0.1) => {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    };
+
+    // --- GAME DATA ---
+    const GEO_ROUNDS = [
+      { name: "Eiffel Tower (Paris)", x: 49.5, y: 31.0, hint: "Heart of Western Europe" },
+      { name: "Statue of Liberty (New York)", x: 28.5, y: 36.5, hint: "East Coast, USA" },
+      { name: "Great Pyramids of Giza", x: 58.0, y: 41.5, hint: "Northern Africa" },
+      { name: "Sydney Opera House", x: 88.5, y: 77.0, hint: "Southeast Australia" },
+      { name: "Tokyo Tower", x: 85.5, y: 38.0, hint: "Island Nation in East Asia" },
+      { name: "Christ the Redeemer (Rio)", x: 36.5, y: 71.0, hint: "South America's Atlantic Coast" }
+    ];
+
+    const ERA_ROUNDS = [
+      { event: "First Human Moon Landing (Apollo 11)", year: 1969 },
+      { event: "Fall of the Berlin Wall", year: 1989 },
+      { event: "Sinking of the RMS Titanic", year: 1912 },
+      { event: "First Apple iPhone Released", year: 2007 },
+      { event: "Discovery of Penicillin by Alexander Fleming", year: 1928 },
+      { event: "World Wide Web Public Release", year: 1991 },
+      { event: "Wright Brothers' First Powered Flight", year: 1903 }
+    ];
+
+    const SCRAMBLE_WORDS = [
+      { word: "DEADLINE", hint: "Something your boss reminds you about daily" },
+      { word: "ESPRESSO", hint: "Fuel for the 9-to-5 grind" },
+      { word: "PROMOTION", hint: "The ultimate reward" },
+      { word: "SPREADSHEET", hint: "Rows, columns, and formulas" },
+      { word: "MEETING", hint: "This could have been an email" },
+      { word: "SYNERGY", hint: "Favorite corporate buzzword" }
+    ];
+
+    // --- MAIN APPLICATION COMPONENT ---
+    function App() {
+      const [roomCode, setRoomCode] = useState('');
+      const [inputCode, setInputCode] = useState('');
+      const [role, setRole] = useState(null); // 'host', 'guest', or 'solo'
+      const [connected, setConnected] = useState(false);
+      const [activeGame, setActiveGame] = useState(null);
+      const [scores, setScores] = useState({ host: 0, guest: 0 });
+      const [statusMsg, setStatusMsg] = useState('');
       
-      const root = ReactDOM.createRoot(document.getElementById("root"));
-      root.render(<App />);
-    </script>
-  </body>
+      const peerRef = useRef(null);
+      const connRef = useRef(null);
+
+      // Clean up connections on unmount
+      useEffect(() => {
+        return () => {
+          if (connRef.current) connRef.current.close();
+          if (peerRef.current) peerRef.current.destroy();
+        };
+      }, []);
+
+      // Broadcast state to other player
+      const sendData = (data) => {
+        if (connRef.current && connRef.current.open) {
+          connRef.current.send(data);
+        }
+      };
+
+      // Handler for received messages
+      const handleIncomingData = (data) => {
+        if (data.type === 'START_GAME') {
+          setActiveGame(data.game);
+          setStatusMsg('');
+        } else if (data.type === 'UPDATE_SCORE') {
+          setScores(data.scores);
+        } else if (data.type === 'RETURN_LOBBY') {
+          setActiveGame(null);
+        }
+      };
+
+      // Host a new Room
+      const hostRoom = () => {
+        const code = Math.random().toString(36).substring(2, 6).toUpperCase();
+        setRoomCode(code);
+        setRole('host');
+        setStatusMsg('Connecting to matchmaking server...');
+
+        const peer = new Peer('duo-' + code);
+        peerRef.current = peer;
+
+        peer.on('open', () => {
+          setStatusMsg(`Room Created! Share code: ${code}`);
+        });
+
+        peer.on('connection', (conn) => {
+          connRef.current = conn;
+          conn.on('open', () => {
+            setConnected(true);
+            setStatusMsg('Opponent joined! Ready to play.');
+            playTone(600, 'sine', 0.2);
+          });
+          conn.on('data', handleIncomingData);
+        });
+
+        peer.on('error', (err) => {
+          setStatusMsg('Room code collision or connection error. Try again.');
+        });
+      };
+
+      // Join an existing Room
+      const joinRoom = () => {
+        if (!inputCode || inputCode.length < 4) return;
+        const code = inputCode.trim().toUpperCase();
+        setRoomCode(code);
+        setRole('guest');
+        setStatusMsg('Searching for host...');
+
+        const peer = new Peer();
+        peerRef.current = peer;
+
+        peer.on('open', () => {
+          const conn = peer.connect('duo-' + code);
+          connRef.current = conn;
+
+          conn.on('open', () => {
+            setConnected(true);
+            setStatusMsg('Connected to room!');
+            playTone(600, 'sine', 0.2);
+          });
+
+          conn.on('data', handleIncomingData);
+        });
+
+        peer.on('error', () => {
+          setStatusMsg('Could not find room with that code.');
+        });
+      };
+
+      // Solo / Pass-and-Play Mode
+      const startSolo = () => {
+        setRole('solo');
+        setConnected(true);
+        setStatusMsg('Practice / Pass-and-Play Mode Active');
+      };
+
+      const selectGame = (gameId) => {
+        setActiveGame(gameId);
+        sendData({ type: 'START_GAME', game: gameId });
+      };
+
+      const backToLobby = () => {
+        setActiveGame(null);
+        sendData({ type: 'RETURN_LOBBY' });
+      };
+
+      const addPoint = (winnerRole) => {
+        setScores(prev => {
+          const next = { ...prev, [winnerRole]: prev[winnerRole] + 1 };
+          sendData({ type: 'UPDATE_SCORE', scores: next });
+          return next;
+        });
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col justify-between p-4 md:p-8 max-w-5xl mx-auto">
+          {/* Header */}
+          <header className="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center font-black text-xl shadow-lg shadow-indigo-500/20">
+                ⚡
+              </div>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                  DuoGames <span className="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/30">1v1 Edition</span>
+                </h1>
+                <p className="text-xs text-slate-400">Quick-fire office showdown</p>
+              </div>
+            </div>
+
+            {/* Match Status / Score Banner */}
+            {connected && (
+              <div className="flex items-center gap-4 bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl">
+                <div className="text-right">
+                  <div className="text-xs font-semibold text-slate-400">{role === 'host' ? 'YOU (Host)' : 'Player 1'}</div>
+                  <div className="text-lg font-bold text-indigo-400">{scores.host}</div>
+                </div>
+                <div className="text-xs text-slate-600 font-black">VS</div>
+                <div className="text-left">
+                  <div className="text-xs font-semibold text-slate-400">{role === 'guest' ? 'YOU (Guest)' : 'Player 2'}</div>
+                  <div className="text-lg font-bold text-emerald-400">{scores.guest}</div>
+                </div>
+              </div>
+            )}
+          </header>
+
+          {/* MAIN VIEW */}
+          <main className="flex-1 flex flex-col justify-center">
+            {!connected ? (
+              /* --- SETUP / CONNECTION VIEW --- */
+              <div className="max-w-md mx-auto w-full space-y-6 bg-slate-900/60 p-6 md:p-8 rounded-2xl border border-slate-800 shadow-2xl backdrop-blur-md">
+                <div className="text-center space-y-2">
+                  <h2 className="text-2xl font-bold text-white">Choose Connection</h2>
+                  <p className="text-xs text-slate-400">Play live with your coworker or practice solo</p>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Create Room Button */}
+                  <button 
+                    onClick={hostRoom}
+                    className="w-full py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition duration-200"
+                  >
+                    Create New Room (Host)
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <div className="h-[1px] bg-slate-800 flex-1"></div>
+                    <span className="text-xs text-slate-500 font-medium">OR JOIN WITH CODE</span>
+                    <div className="h-[1px] bg-slate-800 flex-1"></div>
+                  </div>
+
+                  {/* Join Room */}
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      placeholder="ENTER 4-LETTER CODE"
+                      maxLength={4}
+                      value={inputCode}
+                      onChange={(e) => setInputCode(e.target.value.toUpperCase())}
+                      className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center tracking-widest font-bold uppercase focus:outline-none focus:border-indigo-500 transition"
+                    />
+                    <button 
+                      onClick={joinRoom}
+                      className="px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition duration-200"
+                    >
+                      Join
+                    </button>
+                  </div>
+
+                  {/* Practice Solo */}
+                  <button 
+                    onClick={startSolo}
+                    className="w-full py-2.5 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-lg transition"
+                  >
+                    Play Single-Player / Pass & Play (Local Test)
+                  </button>
+                </div>
+
+                {statusMsg && (
+                  <div className="p-3 bg-slate-950/80 border border-indigo-500/20 rounded-xl text-center text-xs text-indigo-300 font-mono">
+                    {statusMsg}
+                  </div>
+                )}
+              </div>
+            ) : !activeGame ? (
+              /* --- GAME SELECTOR GRID --- */
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold">Select a Battle</h2>
+                    <p className="text-xs text-slate-400">Click any card to launch the match for both players</p>
+                  </div>
+                  <div className="text-xs bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-slate-400">
+                    Room: <span className="font-mono font-bold text-indigo-400">{roomCode || 'LOCAL'}</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <GameCard 
+                    title="Connect 4" 
+                    desc="Classic tactical vertical 4-in-a-row board"
+                    icon="🔴" 
+                    onClick={() => selectGame('connect4')}
+                  />
+                  <GameCard 
+                    title="GeoGuess" 
+                    desc="Click the world map closest to famous landmarks"
+                    icon="🌍" 
+                    onClick={() => selectGame('geoguess')}
+                  />
+                  <GameCard 
+                    title="Guess the Era" 
+                    desc="Historical trivia showdown. Closest year wins"
+                    icon="⏳" 
+                    onClick={() => selectGame('era')}
+                  />
+                  <GameCard 
+                    title="Quick Draw" 
+                    desc="Reflex duel! Wait for green, click instantly"
+                    icon="⚡" 
+                    onClick={() => selectGame('quickdraw')}
+                  />
+                  <GameCard 
+                    title="Tug of War" 
+                    desc="Button mashing battle. Pull the rope across"
+                    icon="🪢" 
+                    onClick={() => selectGame('tug')}
+                  />
+                  <GameCard 
+                    title="Word Scramble" 
+                    desc="Office-themed anagram sprint. First correct unscramble wins"
+                    icon="🔤" 
+                    onClick={() => selectGame('scramble')}
+                  />
+                </div>
+              </div>
+            ) : (
+              /* --- GAME CONTAINER --- */
+              <div className="relative">
+                <button 
+                  onClick={backToLobby}
+                  className="mb-4 text-xs font-semibold flex items-center gap-2 text-slate-400 hover:text-white bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg transition"
+                >
+                  ← Return to Lobby
+                </button>
+
+                {activeGame === 'connect4' && <Connect4 role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+                {activeGame === 'geoguess' && <GeoGuess role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+                {activeGame === 'era' && <GuessEra role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+                {activeGame === 'quickdraw' && <QuickDraw role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+                {activeGame === 'tug' && <TugOfWar role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+                {activeGame === 'scramble' && <WordScramble role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+              </div>
+            )}
+          </main>
+
+          <footer className="text-center text-xs text-slate-600 border-t border-slate-800/60 pt-4 mt-6">
+            DuoGames • Running Peer-to-Peer directly in your browser
+          </footer>
+        </div>
+      );
+    }
+
+    // --- GAME CARD COMPONENT ---
+    function GameCard({ title, desc, icon, onClick }) {
+      return (
+        <div 
+          onClick={onClick}
+          className="group relative cursor-pointer bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-2xl p-6 transition duration-200 hover:-translate-y-1 shadow-lg hover:shadow-indigo-500/10 flex flex-col justify-between"
+        >
+          <div className="text-3xl mb-4 p-3 bg-slate-950 w-fit rounded-xl border border-slate-800/80 group-hover:scale-110 transition">
+            {icon}
+          </div>
+          <div>
+            <h3 className="font-bold text-lg text-white group-hover:text-indigo-400 transition">{title}</h3>
+            <p className="text-xs text-slate-400 mt-1">{desc}</p>
+          </div>
+          <div className="mt-4 text-xs font-semibold text-indigo-400 opacity-0 group-hover:opacity-100 transition flex items-center gap-1">
+            Play Game →
+          </div>
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 1. CONNECT 4
+    // ==========================================
+    function Connect4({ role, sendData, connRef, addPoint }) {
+      const ROWS = 6;
+      const COLS = 7;
+      const [board, setBoard] = useState(Array(ROWS).fill(null).map(() => Array(COLS).fill(null)));
+      const [turn, setTurn] = useState('host'); // 'host' (Red) or 'guest' (Yellow)
+      const [winner, setWinner] = useState(null);
+
+      useEffect(() => {
+        if (!connRef.current) return;
+        const handler = (data) => {
+          if (data.type === 'C4_MOVE') {
+            applyMove(data.col, data.playerRole);
+          } else if (data.type === 'C4_RESET') {
+            resetBoard();
+          }
+        };
+        connRef.current.on('data', handler);
+      }, [board, turn]);
+
+      const checkWin = (grid, r, c, player) => {
+        const dirs = [[0, 1], [1, 0], [1, 1], [1, -1]];
+        for (let [dr, dc] of dirs) {
+          let count = 1;
+          for (let step = 1; step <= 3; step++) {
+            let nr = r + dr * step, nc = c + dc * step;
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && grid[nr][nc] === player) count++;
+            else break;
+          }
+          for (let step = 1; step <= 3; step++) {
+            let nr = r - dr * step, nc = c - dc * step;
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && grid[nr][nc] === player) count++;
+            else break;
+          }
+          if (count >= 4) return true;
+        }
+        return false;
+      };
+
+      const applyMove = (col, playerRole) => {
+        for (let r = ROWS - 1; r >= 0; r--) {
+          if (!board[r][col]) {
+            const next = board.map(row => [...row]);
+            next[r][col] = playerRole;
+            setBoard(next);
+            playTone(playerRole === 'host' ? 400 : 550, 'square', 0.08);
+
+            if (checkWin(next, r, col, playerRole)) {
+              setWinner(playerRole);
+              addPoint(playerRole);
+            } else {
+              setTurn(playerRole === 'host' ? 'guest' : 'host');
+            }
+            break;
+          }
+        }
+      };
+
+      const handleColClick = (col) => {
+        if (winner) return;
+        if (role !== 'solo' && turn !== role) return;
+
+        const currentMover = role === 'solo' ? turn : role;
+        applyMove(col, currentMover);
+        sendData({ type: 'C4_MOVE', col, playerRole: currentMover });
+      };
+
+      const resetBoard = () => {
+        setBoard(Array(ROWS).fill(null).map(() => Array(COLS).fill(null)));
+        setWinner(null);
+        setTurn('host');
+      };
+
+      const isMyTurn = role === 'solo' || turn === role;
+
+      return (
+        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl max-w-lg mx-auto flex flex-col items-center">
+          <div className="flex justify-between w-full mb-4 items-center">
+            <span className="text-sm font-semibold text-slate-300">
+              {winner ? `Winner: ${winner.toUpperCase()}!` : `Turn: ${turn === 'host' ? 'Player 1 (Red)' : 'Player 2 (Yellow)'}`}
+            </span>
+            <span className={`text-xs px-2 py-1 rounded font-bold ${isMyTurn ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+              {winner ? 'GAME OVER' : isMyTurn ? 'YOUR MOVE' : 'WAITING...'}
+            </span>
+          </div>
+
+          <div className="bg-blue-800 p-3 rounded-2xl shadow-2xl grid grid-cols-7 gap-2 border-4 border-blue-900">
+            {Array.from({ length: COLS }).map((_, c) => (
+              <div 
+                key={c} 
+                onClick={() => handleColClick(c)} 
+                className="flex flex-col gap-2 cursor-pointer group"
+              >
+                {Array.from({ length: ROWS }).map((_, r) => {
+                  const val = board[r][c];
+                  return (
+                    <div 
+                      key={r}
+                      className={`w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-blue-950/60 shadow-inner transition duration-150 ${
+                        val === 'host' ? 'bg-rose-500' : val === 'guest' ? 'bg-amber-400' : 'bg-slate-950 group-hover:bg-slate-900'
+                      }`}
+                    />
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          {winner && (
+            <button 
+              onClick={() => { resetBoard(); sendData({ type: 'C4_RESET' }); }}
+              className="mt-6 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/30"
+            >
+              Play Again
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 2. GEOGUESS
+    // ==========================================
+    function GeoGuess({ role, sendData, connRef, addPoint }) {
+      const [roundIdx, setRoundIdx] = useState(0);
+      const [myPin, setMyPin] = useState(null);
+      const [oppPin, setOppPin] = useState(null);
+      const [revealed, setRevealed] = useState(false);
+
+      const current = GEO_ROUNDS[roundIdx % GEO_ROUNDS.length];
+
+      useEffect(() => {
+        if (!connRef.current) return;
+        connRef.current.on('data', (data) => {
+          if (data.type === 'GEO_PIN') {
+            setOppPin(data.pin);
+          } else if (data.type === 'GEO_NEXT') {
+            nextRound();
+          }
+        });
+      }, [roundIdx]);
+
+      // Check if both pinned
+      useEffect(() => {
+        if (myPin && (role === 'solo' || oppPin)) {
+          setRevealed(true);
+          const d1 = Math.hypot(myPin.x - current.x, myPin.y - current.y);
+          if (role !== 'solo') {
+            const d2 = Math.hypot(oppPin.x - current.x, oppPin.y - current.y);
+            if (d1 < d2) addPoint(role);
+            else if (d2 < d1) addPoint(role === 'host' ? 'guest' : 'host');
+          }
+        }
+      }, [myPin, oppPin]);
+
+      const handleMapClick = (e) => {
+        if (myPin || revealed) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        setMyPin({ x, y });
+        playTone(500, 'sine', 0.1);
+        sendData({ type: 'GEO_PIN', pin: { x, y } });
+      };
+
+      const nextRound = () => {
+        setMyPin(null);
+        setOppPin(null);
+        setRevealed(false);
+        setRoundIdx(r => r + 1);
+      };
+
+      return (
+        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl max-w-2xl mx-auto flex flex-col items-center">
+          <div className="text-center mb-4">
+            <span className="text-xs uppercase tracking-widest text-indigo-400 font-bold">Find Location:</span>
+            <h3 className="text-2xl font-bold text-white mt-1">{current.name}</h3>
+            <p className="text-xs text-slate-400 italic">Clue: {current.hint}</p>
+          </div>
+
+          {/* SVG Stylized World Map */}
+          <div 
+            onClick={handleMapClick}
+            className="relative w-full aspect-[2/1] bg-slate-950 rounded-xl border border-slate-800 overflow-hidden cursor-crosshair shadow-2xl"
+          >
+            {/* World Landmass Silhouettes (Stylized coordinates) */}
+            <svg viewBox="0 0 100 50" className="w-full h-full fill-slate-800 stroke-slate-700 stroke-[0.3]">
+              {/* Americas */}
+              <path d="M 15,10 Q 30,8 28,25 Q 35,35 30,45 Q 22,48 20,35 Q 12,20 15,10 Z" />
+              {/* Eurasia & Africa */}
+              <path d="M 45,10 Q 75,5 85,25 Q 75,45 60,42 Q 52,25 45,10 Z" />
+              {/* Australia */}
+              <circle cx="85" cy="38" r="6" />
+            </svg>
+
+            {/* Target Marker */}
+            {revealed && (
+              <div 
+                className="absolute w-4 h-4 bg-emerald-400 rounded-full -translate-x-1/2 -translate-y-1/2 border-2 border-white shadow-lg animate-ping"
+                style={{ left: `${current.x}%`, top: `${current.y}%` }}
+              />
+            )}
+            {revealed && (
+              <div 
+                className="absolute w-4 h-4 bg-emerald-500 rounded-full -translate-x-1/2 -translate-y-1/2 border-2 border-white shadow-lg"
+                style={{ left: `${current.x}%`, top: `${current.y}%` }}
+              />
+            )}
+
+            {/* My Pin */}
+            {myPin && (
+              <div 
+                className="absolute w-3.5 h-3.5 bg-indigo-500 rounded-full -translate-x-1/2 -translate-y-1/2 border-2 border-white"
+                style={{ left: `${myPin.x}%`, top: `${myPin.y}%` }}
+              />
+            )}
+
+            {/* Opponent Pin */}
+            {oppPin && revealed && (
+              <div 
+                className="absolute w-3.5 h-3.5 bg-rose-500 rounded-full -translate-x-1/2 -translate-y-1/2 border-2 border-white"
+                style={{ left: `${oppPin.x}%`, top: `${oppPin.y}%` }}
+              />
+            )}
+          </div>
+
+          <div className="mt-4 text-xs text-slate-400">
+            {!myPin ? "Click the map to place your guess" : !revealed ? "Waiting for opponent guess..." : "Target revealed!"}
+          </div>
+
+          {revealed && (
+            <button 
+              onClick={() => { nextRound(); sendData({ type: 'GEO_NEXT' }); }}
+              className="mt-4 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm shadow-lg shadow-indigo-600/30"
+            >
+              Next Landmark
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 3. GUESS THE ERA
+    // ==========================================
+    function GuessEra({ role, sendData, connRef, addPoint }) {
+      const [idx, setIdx] = useState(0);
+      const [val, setVal] = useState(1970);
+      const [myGuess, setMyGuess] = useState(null);
+      const [oppGuess, setOppGuess] = useState(null);
+      const [show, setShow] = useState(false);
+
+      const cur = ERA_ROUNDS[idx % ERA_ROUNDS.length];
+
+      useEffect(() => {
+        if (!connRef.current) return;
+        connRef.current.on('data', (d) => {
+          if (d.type === 'ERA_GUESS') setOppGuess(d.year);
+          else if (d.type === 'ERA_NEXT') next();
+        });
+      }, [idx]);
+
+      useEffect(() => {
+        if (myGuess !== null && (role === 'solo' || oppGuess !== null)) {
+          setShow(true);
+          const diff1 = Math.abs(myGuess - cur.year);
+          if (role !== 'solo') {
+            const diff2 = Math.abs(oppGuess - cur.year);
+            if (diff1 < diff2) addPoint(role);
+            else if (diff2 < diff1) addPoint(role === 'host' ? 'guest' : 'host');
+          }
+        }
+      }, [myGuess, oppGuess]);
+
+      const submit = () => {
+        setMyGuess(val);
+        sendData({ type: 'ERA_GUESS', year: val });
+      };
+
+      const next = () => {
+        setMyGuess(null);
+        setOppGuess(null);
+        setShow(false);
+        setIdx(i => i + 1);
+      };
+
+      return (
+        <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-md mx-auto text-center space-y-6">
+          <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Guess the Exact Year</span>
+          <h3 className="text-xl font-bold text-white">{cur.event}</h3>
+
+          <div className="text-5xl font-black font-mono text-indigo-400 py-2">
+            {val}
+          </div>
+
+          {!show ? (
+            <div className="space-y-4">
+              <input 
+                type="range" 
+                min="1850" 
+                max="2025" 
+                value={val} 
+                onChange={(e) => setVal(Number(e.target.value))}
+                className="w-full accent-indigo-500 cursor-pointer"
+              />
+              <button 
+                onClick={submit}
+                disabled={myGuess !== null}
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 rounded-xl font-bold transition"
+              >
+                {myGuess !== null ? "Locked in! Waiting..." : "Lock in Guess"}
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800">
+                <div className="text-xs text-slate-500 uppercase">Actual Year</div>
+                <div className="text-4xl font-black text-emerald-400">{cur.year}</div>
+                <div className="text-xs text-slate-400 mt-2">
+                  Your guess was off by <span className="font-bold text-white">{Math.abs(myGuess - cur.year)}</span> years
+                </div>
+              </div>
+              <button 
+                onClick={() => { next(); sendData({ type: 'ERA_NEXT' }); }}
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold"
+              >
+                Next Round
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 4. QUICK DRAW
+    // ==========================================
+    function QuickDraw({ role, sendData, connRef, addPoint }) {
+      const [state, setState] = useState('waiting'); // waiting, ready, fire, finished
+      const [winner, setWinner] = useState(null);
+      const timerRef = useRef(null);
+
+      useEffect(() => {
+        if (!connRef.current) return;
+        connRef.current.on('data', (d) => {
+          if (d.type === 'QD_FIRE') {
+            setState('fire');
+          } else if (d.type === 'QD_WIN') {
+            setWinner(d.winner);
+            setState('finished');
+          } else if (d.type === 'QD_RESTART') {
+            restart();
+          }
+        });
+      }, []);
+
+      const startDuel = () => {
+        setState('ready');
+        setWinner(null);
+        const delay = 2000 + Math.random() * 3000;
+        timerRef.current = setTimeout(() => {
+          setState('fire');
+          playTone(800, 'sine', 0.15);
+          sendData({ type: 'QD_FIRE' });
+        }, delay);
+      };
+
+      const handleClick = () => {
+        if (state === 'ready') {
+          // False start!
+          clearTimeout(timerRef.current);
+          const other = role === 'host' ? 'guest' : 'host';
+          setWinner(other);
+          setState('finished');
+          addPoint(other);
+          sendData({ type: 'QD_WIN', winner: other });
+        } else if (state === 'fire') {
+          playTone(1000, 'square', 0.2);
+          setWinner(role);
+          setState('finished');
+          addPoint(role);
+          sendData({ type: 'QD_WIN', winner: role });
+        }
+      };
+
+      const restart = () => {
+        setState('waiting');
+        setWinner(null);
+      };
+
+      return (
+        <div 
+          onClick={handleClick}
+          className={`h-80 rounded-3xl border-2 flex flex-col items-center justify-center cursor-pointer transition select-none ${
+            state === 'fire' 
+              ? 'bg-emerald-500 border-emerald-300 text-slate-950 shadow-2xl shadow-emerald-500/50' 
+              : state === 'ready' 
+              ? 'bg-rose-950/80 border-rose-800 text-rose-300' 
+              : 'bg-slate-900 border-slate-800 text-slate-200'
+          }`}
+        >
+          {state === 'waiting' && (
+            <div className="text-center space-y-3">
+              <div className="text-5xl">⚡</div>
+              <h3 className="text-2xl font-bold">Quick Draw Reflex Duel</h3>
+              <p className="text-xs text-slate-400">Click below to arm your trigger</p>
+              <button 
+                onClick={(e) => { e.stopPropagation(); startDuel(); }} 
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg"
+              >
+                Start Countdown
+              </button>
+            </div>
+          )}
+
+          {state === 'ready' && (
+            <div className="text-center">
+              <h3 className="text-3xl font-black tracking-widest uppercase animate-pulse">STEADY...</h3>
+              <p className="text-xs mt-2 opacity-80">Do NOT click early or you forfeit!</p>
+            </div>
+          )}
+
+          {state === 'fire' && (
+            <div className="text-center">
+              <h3 className="text-6xl font-black tracking-tighter">CLICK NOW!</h3>
+            </div>
+          )}
+
+          {state === 'finished' && (
+            <div className="text-center space-y-3">
+              <h3 className="text-3xl font-bold">{winner === role ? "🏆 YOU WON!" : "💥 OPPONENT WON!"}</h3>
+              <button 
+                onClick={(e) => { e.stopPropagation(); restart(); sendData({ type: 'QD_RESTART' }); }}
+                className="px-6 py-2 bg-slate-950 text-white border border-slate-800 hover:border-slate-700 font-bold rounded-xl"
+              >
+                Rematch
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 5. TUG OF WAR
+    // ==========================================
+    function TugOfWar({ role, sendData, connRef, addPoint }) {
+      const [pos, setPos] = useState(0); // -40 (Host wins) to +40 (Guest wins)
+      const [winner, setWinner] = useState(null);
+
+      useEffect(() => {
+        if (!connRef.current) return;
+        connRef.current.on('data', (d) => {
+          if (d.type === 'TUG_PULL') {
+            applyPull(d.delta);
+          } else if (d.type === 'TUG_RESET') {
+            setPos(0);
+            setWinner(null);
+          }
+        });
+      }, [pos, winner]);
+
+      const applyPull = (delta) => {
+        if (winner) return;
+        setPos(p => {
+          const next = p + delta;
+          if (next <= -40) {
+            setWinner('host');
+            addPoint('host');
+          } else if (next >= 40) {
+            setWinner('guest');
+            addPoint('guest');
+          }
+          return next;
+        });
+        playTone(300 + Math.abs(pos) * 5, 'triangle', 0.05);
+      };
+
+      const pull = () => {
+        if (winner) return;
+        const delta = (role === 'host' || role === 'solo') ? -3 : 3;
+        applyPull(delta);
+        sendData({ type: 'TUG_PULL', delta });
+      };
+
+      return (
+        <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-lg mx-auto text-center space-y-6">
+          <div>
+            <h3 className="text-2xl font-bold">Button-Mashing Tug of War</h3>
+            <p className="text-xs text-slate-400 mt-1">Mash the pull button as fast as your fingers can move!</p>
+          </div>
+
+          {/* Rope Track */}
+          <div className="relative h-12 bg-slate-950 rounded-2xl border border-slate-800 flex items-center px-4 overflow-hidden">
+            {/* Center Line */}
+            <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-rose-500/50"></div>
+            {/* Knot Indicator */}
+            <div 
+              className="absolute w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 shadow-lg shadow-orange-500/50 -translate-x-1/2 transition-all duration-75 flex items-center justify-center font-black text-xs text-slate-950"
+              style={{ left: `${50 + pos}%` }}
+            >
+              🪢
+            </div>
+          </div>
+
+          <div className="flex justify-between text-xs font-bold text-slate-400">
+            <span>← Player 1 Goal</span>
+            <span>Player 2 Goal →</span>
+          </div>
+
+          {!winner ? (
+            <button 
+              onClick={pull}
+              className="w-full py-8 bg-gradient-to-r from-indigo-600 to-indigo-500 active:scale-95 text-2xl font-black rounded-2xl shadow-xl shadow-indigo-600/30 uppercase tracking-widest transition select-none"
+            >
+              PULL! 💥
+            </button>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-2xl font-bold text-emerald-400">
+                {winner.toUpperCase()} PULLED THE VICTORY!
+              </div>
+              <button 
+                onClick={() => { setPos(0); setWinner(null); sendData({ type: 'TUG_RESET' }); }}
+                className="px-6 py-2.5 bg-indigo-600 rounded-xl font-bold text-sm"
+              >
+                Rematch
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ==========================================
+    // 6. WORD SCRAMBLE
+    // ==========================================
+    function WordScramble({ role, sendData, connRef, addPoint }) {
+      const [idx, setIdx] = useState(0);
+      const [input, setInput] = useState('');
+      const [winner, setWinner] = useState(null);
+
+      const cur = SCRAMBLE_WORDS[idx % SCRAMBLE_WORDS.length];
+      const scrambled = cur.word.split('').sort(() => 0.5 - Math.random()).join('');
+
+      useEffect(() => {
+        if (!connRef.current) return;
+        connRef.current.on('data', (d) => {
+          if (d.type === 'SCRAMBLE_WIN') {
+            setWinner(d.winner);
+          } else if (d.type === 'SCRAMBLE_NEXT') {
+            next();
+          }
+        });
+      }, [idx]);
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (winner) return;
+        if (input.trim().toUpperCase() === cur.word) {
+          playTone(900, 'sine', 0.2);
+          setWinner(role);
+          addPoint(role);
+          sendData({ type: 'SCRAMBLE_WIN', winner: role });
+        } else {
+          playTone(200, 'sawtooth', 0.1);
+        }
+      };
+
+      const next = () => {
+        setWinner(null);
+        setInput('');
+        setIdx(i => i + 1);
+      };
+
+      return (
+        <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-md mx-auto text-center space-y-6">
+          <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Office Word Scramble</span>
+          
+          <div className="p-6 bg-slate-950 rounded-2xl border border-slate-800">
+            <div className="text-4xl font-mono font-black tracking-widest text-emerald-400">{scrambled}</div>
+            <div className="text-xs text-slate-400 mt-3 italic">Hint: {cur.hint}</div>
+          </div>
+
+          {!winner ? (
+            <form onSubmit={handleSubmit} className="flex gap-2">
+              <input 
+                type="text"
+                placeholder="TYPE UNSCRAMBLED WORD..."
+                value={input}
+                onChange={(e) => setInput(e.target.value.toUpperCase())}
+                className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 font-mono font-bold uppercase focus:outline-none focus:border-indigo-500"
+              />
+              <button 
+                type="submit"
+                className="px-6 bg-indigo-600 hover:bg-indigo-500 font-bold rounded-xl"
+              >
+                Submit
+              </button>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-xl font-bold text-white">
+                Answer: <span className="text-emerald-400 font-mono">{cur.word}</span>
+              </div>
+              <div className="text-sm font-semibold text-indigo-400">
+                {winner === role ? "You solved it first!" : "Opponent solved it!"}
+              </div>
+              <button 
+                onClick={() => { next(); sendData({ type: 'SCRAMBLE_NEXT' }); }}
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold"
+              >
+                Next Word
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Mount Application
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
 </html>
