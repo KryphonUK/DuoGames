@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DuoGames - 1v1 Office & Recon Showdown</title>
+  <title>DuoGames - 1v1 Office & Visual Recon Showdown</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- React 18 & Babel Standalone -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <!-- PeerJS for Free Real-Time Multiplayer -->
+  <!-- PeerJS for Real-Time 1v1 Multiplayer -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white">
@@ -19,7 +19,7 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
-    // --- SOUND EFFECTS (Web Audio API Synthesizer) ---
+    // --- SYNTHESIZED SOUND EFFECTS ---
     const playTone = (freq = 440, type = 'sine', duration = 0.1) => {
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -39,12 +39,11 @@
     // --- HAVERSINE GREAT-CIRCLE DISTANCE CALCULATOR (KM) ---
     function getDistanceKm(x1, y1, x2, y2) {
       const toRad = (d) => (d * Math.PI) / 180;
-      // Map percentages to Equirectangular coordinates:
       const lon1 = (x1 / 100) * 360 - 180;
       const lat1 = 90 - (y1 / 100) * 180;
       const lon2 = (x2 / 100) * 360 - 180;
       const lat2 = 90 - (y2 / 100) * 180;
-      const R = 6371; // Earth's mean radius in km
+      const R = 6371;
       const dLat = toRad(lat2 - lat1);
       const dLon = toRad(lon2 - lon1);
       const a = Math.sin(dLat / 2) ** 2 +
@@ -53,20 +52,20 @@
       return Math.round(R * c);
     }
 
-    // --- MASSIVE DATASETS ---
-
-    // 1. 25+ GeoGuess Landmarks with Mathematically Calibrated Coordinates
+    // ==========================================
+    // 1. 50 GEOGUESS LANDMARKS (Accurate Coordinates)
+    // ==========================================
     const GEO_ROUNDS = [
       { name: "Statue of Liberty (New York)", x: 29.4, y: 27.4, hint: "East Coast harbor, USA" },
-      { name: "Eiffel Tower (Paris)", x: 50.6, y: 22.9, hint: "Heart of Western Europe along the Seine" },
+      { name: "Eiffel Tower (Paris)", x: 50.6, y: 22.9, hint: "Western Europe along the Seine" },
       { name: "Great Pyramids of Giza", x: 58.6, y: 33.3, hint: "Northern Africa, desert sands near the Nile" },
       { name: "Sydney Opera House", x: 92.0, y: 68.8, hint: "Southeast coast of Australia" },
       { name: "Tokyo Tower", x: 88.8, y: 30.2, hint: "East Coast of Honshu, Japan" },
-      { name: "Christ the Redeemer (Rio)", x: 38.0, y: 62.8, hint: "South America's Atlantic coast, Corcovado mountain" },
+      { name: "Christ the Redeemer (Rio)", x: 38.0, y: 62.8, hint: "South America's Atlantic coast, Corcovado" },
       { name: "Taj Mahal (Agra)", x: 71.7, y: 34.9, hint: "Northern Indian riverbank" },
       { name: "Big Ben (London)", x: 49.9, y: 21.4, hint: "United Kingdom capital on the Thames" },
       { name: "Colosseum (Rome)", x: 53.5, y: 26.7, hint: "Central Italian peninsula" },
-      { name: "Machu Picchu", x: 30.2, y: 57.3, hint: "Andes Mountains of Peru" },
+      { name: "Machu Picchu", x: 30.2, y: 57.3, hint: "High Andes Mountains of Peru" },
       { name: "Burj Khalifa (Dubai)", x: 65.3, y: 36.0, hint: "Persian Gulf skyscraper capital" },
       { name: "Grand Canyon", x: 20.6, y: 30.0, hint: "Arizona desert, American Southwest" },
       { name: "Cape of Good Hope", x: 55.1, y: 69.1, hint: "Southern tip of the African continent" },
@@ -77,72 +76,72 @@
       { name: "Angkor Wat", x: 78.8, y: 40.8, hint: "Ancient jungle temple complex in Cambodia" },
       { name: "Chichen Itza", x: 25.5, y: 38.5, hint: "Yucatan Peninsula, Mexico" },
       { name: "Santorini", x: 57.0, y: 29.8, hint: "Aegean Sea volcanic caldera, Greece" },
-      { name: "Table Mountain", x: 55.1, y: 68.8, hint: "Overlooking Cape Town harbor" },
-      { name: "Niagara Falls", x: 28.1, y: 26.1, hint: "Border between New York State & Ontario, Canada" },
+      { name: "Table Mountain", x: 55.1, y: 68.8, hint: "Overlooking Cape Town harbor, South Africa" },
+      { name: "Niagara Falls", x: 28.1, y: 26.1, hint: "Border of New York State & Ontario" },
       { name: "Kremlin & Red Square (Moscow)", x: 60.5, y: 19.1, hint: "Heart of Russia" },
-      { name: "Easter Island (Rapa Nui)", x: 20.0, y: 65.1, hint: "Isolated Polynesian island in Southeastern Pacific" }
+      { name: "Easter Island (Rapa Nui)", x: 20.0, y: 65.1, hint: "Isolated Polynesian island in SE Pacific" },
+      { name: "Great Wall of China (Badaling)", x: 82.2, y: 27.6, hint: "Northern frontier ridges of historic China" },
+      { name: "Mount Fuji", x: 88.5, y: 30.4, hint: "Iconic snow-capped volcano, Japan" },
+      { name: "Mount Kilimanjaro", x: 60.4, y: 51.7, hint: "Highest peak in Africa, Tanzania" },
+      { name: "Victoria Falls", x: 57.2, y: 59.9, hint: "Zambezi river border of Zambia and Zimbabwe" },
+      { name: "Iguazu Falls", x: 34.9, y: 64.3, hint: "Subtropical border of Argentina and Brazil" },
+      { name: "Panama Canal (Miraflores)", x: 27.9, y: 45.0, hint: "Central American shipping shortcut" },
+      { name: "Suez Canal", x: 59.0, y: 33.0, hint: "Connecting Mediterranean and Red Sea" },
+      { name: "Alcatraz Island", x: 16.0, y: 29.0, hint: "Island fortress in San Francisco Bay" },
+      { name: "Acropolis of Athens", x: 56.6, y: 28.9, hint: "Ancient rocky citadel overlooking Greece" },
+      { name: "Neuschwanstein Castle", x: 53.0, y: 23.6, hint: "Fairytale castle in Bavarian Alps, Germany" },
+      { name: "Uluru (Ayers Rock)", x: 86.4, y: 64.1, hint: "Red sandstone monolith in Australian outback" },
+      { name: "Mount Rushmore", x: 21.3, y: 25.6, hint: "Black Hills of South Dakota, USA" },
+      { name: "Hollywood Sign", x: 17.1, y: 31.0, hint: "Hills overlooking Los Angeles, California" },
+      { name: "Forbidden City (Beijing)", x: 82.3, y: 27.8, hint: "Imperial palace complex, China" },
+      { name: "Brandenburg Gate (Berlin)", x: 53.7, y: 20.8, hint: "Historic neoclassical archway in Germany" },
+      { name: "Hagia Sophia (Istanbul)", x: 58.1, y: 27.2, hint: "Historic crossroads of Europe & Asia, Turkey" },
+      { name: "Galapagos Islands", x: 24.7, y: 50.5, hint: "Volcanic archipelago off Ecuador, Pacific" },
+      { name: "Reykjavik", x: 43.9, y: 14.4, hint: "Geothermal coastal capital of Iceland" },
+      { name: "Dead Sea", x: 59.9, y: 32.5, hint: "Lowest hypersaline lake on Earth, Jordan Valley" },
+      { name: "Sagrada Familia (Barcelona)", x: 50.6, y: 27.0, hint: "Gaudí architecture in Catalonia, Spain" },
+      { name: "Matterhorn", x: 52.1, y: 24.5, hint: "Pyramidal alpine summit on Swiss-Italian border" },
+      { name: "Loch Ness", x: 48.8, y: 18.2, hint: "Deep freshwater loch in Scottish Highlands" },
+      { name: "Salar de Uyuni", x: 31.3, y: 61.2, hint: "World's largest pristine salt flat, Bolivia" },
+      { name: "Halong Bay", x: 79.8, y: 38.4, hint: "Emerald waters & towering limestone isles, Vietnam" },
+      { name: "Leaning Tower of Pisa", x: 52.9, y: 25.7, hint: "Free-standing bell tower in Tuscany, Italy" },
+      { name: "St. Basil's Cathedral", x: 60.5, y: 19.0, hint: "Vibrant onion-domed landmark in Red Square" }
     ];
 
-    // 2. 25+ Guess the Era Events
-    const ERA_ROUNDS = [
-      { event: "First Human Moon Landing (Apollo 11)", year: 1969 },
-      { event: "Fall of the Berlin Wall", year: 1989 },
-      { event: "Sinking of the RMS Titanic", year: 1912 },
-      { event: "First Apple iPhone Released", year: 2007 },
-      { event: "Discovery of Penicillin by Alexander Fleming", year: 1928 },
-      { event: "World Wide Web Public Release (Tim Berners-Lee)", year: 1991 },
-      { event: "Wright Brothers' First Powered Airplane Flight", year: 1903 },
-      { event: "End of World War II & Founding of United Nations", year: 1945 },
-      { event: "Chernobyl Nuclear Power Plant Disaster", year: 1986 },
-      { event: "First Human in Space (Yuri Gagarin)", year: 1961 },
-      { event: "Armistice ending World War I signed", year: 1918 },
-      { event: "Original Sony PlayStation Home Console Released", year: 1994 },
-      { event: "First Commercial Boeing 747 Jumbo Jet Flight", year: 1970 },
-      { event: "Discovery of King Tutankhamun's Tomb", year: 1922 },
-      { event: "Launch of Google Web Search", year: 1998 },
-      { event: "First Flight of the Supersonic Concorde", year: 1969 },
-      { event: "Wall Street Crash triggering the Great Depression", year: 1929 },
-      { event: "First Modern Olympic Games Held in Athens", year: 1896 },
-      { event: "First Successful Human Heart Transplant", year: 1967 },
-      { event: "Pac-Man Arcade Game Debut", year: 1980 },
-      { event: "Double-Helix Structure of DNA Published", year: 1953 },
-      { event: "Hubble Space Telescope Deployed into Orbit", year: 1990 },
-      { event: "Opening of the Panama Canal", year: 1914 },
-      { event: "First Video Uploaded to YouTube ('Me at the zoo')", year: 2005 }
-    ];
-
-    // 3. Recon: Combat Warbirds & Aircraft
+    // ==========================================
+    // 2. 20 COMBAT AIRCRAFT (With High-Res Photos)
+    // ==========================================
     const AIRCRAFT_ROUNDS = [
       {
-        name: "A-10 Thunderbolt II 'Warthog'",
+        name: "A-10 Thunderbolt II",
         origin: "USA",
         role: "Close Air Support & Tank Buster",
         spec: "Armed with 30mm GAU-8/A Avenger rotary cannon firing depleted uranium rounds; straight high-lift wings.",
-        icon: "✈️",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/A-10_Thunderbolt_II.jpg?width=700",
         options: ["A-10 Thunderbolt II", "Su-25 Frogfoot", "F-16 Fighting Falcon", "AV-8B Harrier II"]
       },
       {
         name: "SR-71 Blackbird",
         origin: "USA (Skunk Works)",
-        role: "Long-Range Strategic Reconnaissance",
-        spec: "Capable of Mach 3.3+ and flying above 85,000 feet; constructed primarily from titanium.",
-        icon: "🦅",
+        role: "Strategic Reconnaissance",
+        spec: "Capable of Mach 3.3+ and cruising above 85,000 feet; constructed primarily from heat-resistant titanium.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Lockheed_SR-71_Blackbird.jpg?width=700",
         options: ["SR-71 Blackbird", "U-2 Dragon Lady", "MiG-25 Foxbat", "XB-70 Valkyrie"]
       },
       {
         name: "B-2 Spirit",
         origin: "USA",
         role: "Stealth Strategic Heavy Bomber",
-        spec: "Iconic flying-wing design with continuous-curvature radar absorption skin and no vertical tail surfaces.",
-        icon: "🦇",
+        spec: "Flying-wing design with continuous-curvature radar absorption skin and zero vertical tail fins.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/B-2_Spirit_original.jpg?width=700",
         options: ["B-2 Spirit", "B-21 Raider", "F-117 Nighthawk", "B-52 Stratofortress"]
       },
       {
         name: "F-22 Raptor",
         origin: "USA",
-        role: "5th-Generation Air Superiority Fighter",
-        spec: "Supercruise without afterburners, 2D thrust vectoring nozzles, all-aspect stealth.",
-        icon: "🛩️",
+        role: "5th-Gen Air Superiority Fighter",
+        spec: "Supercruise without afterburners, 2D thrust vectoring nozzles, all-aspect stealth shaping.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/F-22_Raptor_edit1.jpg?width=700",
         options: ["F-22 Raptor", "F-35 Lightning II", "Su-57 Felon", "J-20 Mighty Dragon"]
       },
       {
@@ -150,7 +149,7 @@
         origin: "United Kingdom",
         role: "WWII Interceptor Fighter",
         spec: "Famed elliptical wings, Rolls-Royce Merlin V12 liquid-cooled engine, hero of the Battle of Britain.",
-        icon: "🎖️",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Spitfire_F.R_MK_XIV.jpg?width=700",
         options: ["Supermarine Spitfire", "Hawker Hurricane", "Messerschmitt Bf 109", "P-51 Mustang"]
       },
       {
@@ -158,163 +157,547 @@
         origin: "USA",
         role: "Carrier-based Supersonic Interceptor",
         spec: "Variable-sweep 'swing wings', twin vertical tails, long-range AIM-54 Phoenix missile carrier.",
-        icon: "🚀",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/F-14A_Tomcat_VF-142.jpg?width=700",
         options: ["F-14 Tomcat", "F/A-18 Hornet", "Tornado ADV", "MiG-23 Flogger"]
       },
       {
-        name: "AC-130 Gunship 'Spooky'",
+        name: "F-35 Lightning II",
+        origin: "USA / Allied Consortium",
+        role: "5th-Gen Multi-Role Stealth Fighter",
+        spec: "Electro-optical targeting system, helmet-mounted 360-degree vision, STOVL 'B' variant.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/F-35A_flight_(cropped).jpg?width=700",
+        options: ["F-35 Lightning II", "F-22 Raptor", "Su-75 Checkmate", "Gripen E"]
+      },
+      {
+        name: "B-52 Stratofortress",
         origin: "USA",
-        role: "Heavy Ground Support Attack Aircraft",
-        spec: "Heavy fixed-wing aircraft armed with side-firing 105mm M102 howitzer and 40mm cannons.",
-        icon: "💥",
-        options: ["AC-130 Gunship", "C-17 Globemaster", "An-124 Ruslan", "KC-135 Stratotanker"]
+        role: "Long-Range Strategic Heavy Bomber",
+        spec: "Eight turbojet engines mounted in four underwing pods; continuous frontline service since the 1950s.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/B-52H_Stratofortress_in_flight_(9591603).jpg?width=700",
+        options: ["B-52 Stratofortress", "Tu-95 Bear", "B-1B Lancer", "Vulcan B.2"]
+      },
+      {
+        name: "AH-64 Apache",
+        origin: "USA",
+        role: "Heavy Attack Helicopter",
+        spec: "Twin turboshafts, nose-mounted M230 30mm chain gun, AGM-114 Hellfire laser-guided missiles.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Apache_helicopter_in_flight.jpg?width=700",
+        options: ["AH-64 Apache", "Ka-52 Alligator", "Mi-24 Hind", "Eurocopter Tiger"]
+      },
+      {
+        name: "F-117 Nighthawk",
+        origin: "USA (Lockheed Skunk Works)",
+        role: "Stealth Ground Attack Aircraft",
+        spec: "Faceted flat surface panels designed to scatter radar waves; nickname 'The Hopeless Diamond'.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/F-117_Nighthawk_Front.jpg?width=700",
+        options: ["F-117 Nighthawk", "B-2 Spirit", "A-12 Avenger II", "YF-23 Black Widow"]
+      },
+      {
+        name: "P-51 Mustang",
+        origin: "USA",
+        role: "Long-Range WWII Escort Fighter",
+        spec: "Laminar flow wing and bubble canopy, fitted with Rolls-Royce Merlin engine to escort Allied bombers.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/P-51_Mustang_fighter_in_flight,_Inglewood,_Calif._1a35324v.jpg?width=700",
+        options: ["P-51 Mustang", "P-47 Thunderbolt", "P-38 Lightning", "Corsair F4U"]
       },
       {
         name: "Eurofighter Typhoon",
-        origin: "United Kingdom / Germany / Italy / Spain",
+        origin: "UK / Germany / Italy / Spain",
         role: "Multirole Canard-Delta Fighter",
-        spec: "Foreplane canards, delta wing, twin Eurojet EJ200 engines, high-agility dogfighter.",
-        icon: "⚡",
+        spec: "Foreplane canards, delta wings, twin Eurojet EJ200 engines, high-agility dogfighter.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Eurofighter_9803_2.jpg?width=700",
         options: ["Eurofighter Typhoon", "Dassault Rafale", "Saab JAS 39 Gripen", "Mirage 2000"]
+      },
+      {
+        name: "AC-130 Gunship",
+        origin: "USA",
+        role: "Heavy Ground Support Attack Aircraft",
+        spec: "Side-firing heavy armament including a 105mm M102 howitzer and 40mm cannons.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Lockheed_AC-130H_Hercules_USAF.jpg?width=700",
+        options: ["AC-130 Gunship", "C-17 Globemaster", "An-124 Ruslan", "KC-135 Stratotanker"]
+      },
+      {
+        name: "F-15 Eagle",
+        origin: "USA",
+        role: "All-Weather Tactical Air Superiority",
+        spec: "Twin Pratt & Whitney turbofans, legendary combat air-to-air record of over 104 kills to 0 losses.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/F-15_Eagle_in_flight.jpg?width=700",
+        options: ["F-15 Eagle", "F-16 Falcon", "F-4 Phantom II", "Su-27 Flanker"]
+      },
+      {
+        name: "Messerschmitt Bf 109",
+        origin: "Germany",
+        role: "WWII Fighter & Interceptor",
+        spec: "Daimler-Benz inverted-V12 liquid-cooled engine, narrow-track gear, backbone of the Luftwaffe.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Messerschmitt_Bf_109G-6.jpg?width=700",
+        options: ["Messerschmitt Bf 109", "Focke-Wulf Fw 190", "Heinkel He 112", "Macchi C.202"]
+      },
+      {
+        name: "U-2 Dragon Lady",
+        origin: "USA",
+        role: "Ultra-High Altitude Reconnaissance",
+        spec: "Glider-like ultra-long wingspan operating at 70,000+ feet; pilot wears full astronaut pressure suit.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Usaf.u2.750pix.jpg?width=700",
+        options: ["U-2 Dragon Lady", "SR-71 Blackbird", "Canberra PR.9", "WB-57F"]
+      },
+      {
+        name: "Dassault Rafale",
+        origin: "France",
+        role: "Omnirole Combat Aircraft",
+        spec: "Canard delta wing, Snecma M88 engines, Spectra electronic warfare suite; carrier catapult capable.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Dassault_Rafale_C_in_flight.jpg?width=700",
+        options: ["Dassault Rafale", "Mirage 2000", "Eurofighter Typhoon", "JAS 39 Gripen"]
+      },
+      {
+        name: "MiG-29 Fulcrum",
+        origin: "Soviet Union",
+        role: "Air Superiority / Tactical Fighter",
+        spec: "Dual widely-spaced Klimov RD-33 turbofans, leading-edge root extensions, helmet-mounted missile sight.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/MiG-29_in_flight.jpg?width=700",
+        options: ["MiG-29 Fulcrum", "Su-27 Flanker", "MiG-25 Foxbat", "MiG-21 Fishbed"]
+      },
+      {
+        name: "AV-8B Harrier II",
+        origin: "United Kingdom / USA",
+        role: "V/STOL Jump Jet Strike Aircraft",
+        spec: "Pegasus vectored-thrust engine with four rotating exhaust nozzles enabling hover and vertical landings.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/AV-8B_Harrier_II_in_flight.jpg?width=700",
+        options: ["AV-8B Harrier II", "Yak-38 Forger", "F-35B Lightning", "Mirage IIIV"]
+      },
+      {
+        name: "Su-57 Felon",
+        origin: "Russia",
+        role: "5th-Gen Multirole Stealth Fighter",
+        spec: "Blended wing-body fuselage with 3D thrust-vectoring Saturn engines and internal weapons bays.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Sukhoi_Su-57_in_flight.jpg?width=700",
+        options: ["Su-57 Felon", "MiG-35 Fulcrum", "Su-35 Flanker-E", "J-20 Mighty Dragon"]
       }
     ];
 
-    // 4. Recon: Military Small Arms & Rifles
+    // ==========================================
+    // 3. 20 FIREARMS & RIFLES (With High-Res Photos)
+    // ==========================================
     const WEAPON_ROUNDS = [
       {
         name: "AK-47 / AKM",
         origin: "Soviet Union",
         caliber: "7.62x39mm",
-        spec: "Long-stroke gas piston, rotating bolt, stamped receiver, banana magazine, legendary reliability in mud and sand.",
+        spec: "Long-stroke gas piston, rotating bolt, stamped receiver, curved steel magazine, legendary reliability in mud and sand.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/AK-47_type_II_noBG.png?width=700",
         options: ["AK-47 / AKM", "Type 56", "Galil", "SKS"]
       },
       {
         name: "M4A1 Carbine",
         origin: "USA",
         caliber: "5.56x45mm NATO",
-        spec: "Direct impingement gas system, collapsible stock, Picatinny flat-top upper receiver, standard US infantry rifle.",
+        spec: "Direct impingement gas system, collapsible stock, Picatinny flat-top upper receiver; standard frontline US infantry carbine.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/M4a1.jpg?width=700",
         options: ["M4A1 Carbine", "HK416", "FN SCAR-L", "SIG MCX"]
       },
       {
         name: "Steyr AUG",
         origin: "Austria",
         caliber: "5.56x45mm NATO",
-        spec: "Pioneering bullpup configuration with action behind trigger, translucent magazine, and integrated optical scope.",
-        options: ["Steyr AUG", "FAMAS", "SA80 / L85", "TAR-21 Tavor"]
+        spec: "Pioneering bullpup configuration with firing action behind trigger, translucent magazine, and integrated optical scope.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Steyr_AUG_A1_and_AG-C.jpg?width=700",
+        options: ["Steyr AUG", "FAMAS F1", "SA80 / L85A2", "TAR-21 Tavor"]
       },
       {
         name: "FN P90",
         origin: "Belgium",
         caliber: "5.7x28mm Armor-Piercing",
-        spec: "Compact ambidextrous PDW with unique horizontal top-mounted 50-round magazine and bottom-ejection chute.",
+        spec: "Compact ambidextrous PDW with unique horizontal top-mounted 50-round translucent magazine and downward ejection.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/P90_Official_No_Bg.png?width=700",
         options: ["FN P90", "MP7", "PP-19 Bizon", "Uzi"]
       },
       {
-        name: "Barrett M82 (.50 Cal)",
+        name: "Barrett M82",
         origin: "USA",
         caliber: ".50 BMG (12.7x99mm)",
-        spec: "Semi-automatic anti-materiel sniper rifle with fluted barrel and distinctive arrowhead dual-chamber muzzle brake.",
-        options: ["Barrett M82", "Accuracy International AX50", "CheyTac M200", "McMillan TAC-50"]
+        spec: "Semi-automatic anti-materiel sniper rifle with short-recoil operation, fluted barrel, and arrowhead dual-chamber brake.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Barrett_M82.jpg?width=700",
+        options: ["Barrett M82", "Accuracy International AX50", "CheyTac M200 Intervention", "McMillan TAC-50"]
       },
       {
-        name: "Heckler & Koch MP5",
+        name: "HK MP5",
         origin: "Germany",
         caliber: "9x19mm Parabellum",
-        spec: "Roller-delayed blowback submachine gun favored worldwide by SAS, GSG 9, and SWAT hostage rescue units.",
+        spec: "Roller-delayed blowback closed-bolt submachine gun favored worldwide by British SAS, GSG 9, and SWAT tactical units.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/HK_MP5_noBG.png?width=700",
         options: ["HK MP5", "CZ Scorpion Evo", "MAC-10", "Beretta M12"]
       },
       {
         name: "Karabiner 98k",
         origin: "Germany",
         caliber: "7.92x57mm Mauser",
-        spec: "Controlled-feed bolt-action military service rifle with internal 5-round stripper clip magazine; standard WWII Wehrmacht arm.",
+        spec: "Controlled-feed bolt-action military service rifle with internal 5-round stripper clip magazine; standard WWII infantry arm.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Mauser_Kar._98k_hunting_rifle.jpg?width=700",
         options: ["Karabiner 98k", "Mosin-Nagant", "Lee-Enfield No. 4", "Springfield M1903"]
+      },
+      {
+        name: "FN SCAR-H",
+        origin: "Belgium / USA",
+        caliber: "7.62x51mm NATO (.308)",
+        spec: "Short-stroke gas piston battle rifle featuring monolithic aluminum receiver, reciprocating handle, and folding modular stock.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/SCAR-H_EP.jpg?width=700",
+        options: ["FN SCAR-H", "HK G3", "M14 / EBR", "Galil ACE 32"]
+      },
+      {
+        name: "SA80 / L85A2",
+        origin: "United Kingdom",
+        caliber: "5.56x45mm NATO",
+        spec: "British Armed Forces standard issue bullpup rifle; modernized with German Heckler & Koch internals and SUSAT/ACOG optics.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/SA80_A2_(L85A2)_5.56mm_Rifle_MOD_45162154.jpg?width=700",
+        options: ["SA80 / L85A2", "FAMAS F1", "Steyr AUG", "QBZ-95"]
+      },
+      {
+        name: "FAMAS F1",
+        origin: "France",
+        caliber: "5.56x45mm NATO",
+        spec: "Lever-delayed blowback bullpup rifle nicknamed 'Le Clairon' (The Bugle) due to its elevated top carry handle.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/FAMAS_F1.png?width=700",
+        options: ["FAMAS F1", "VHS-2", "Steyr AUG", "SA80 / L85A2"]
+      },
+      {
+        name: "Dragunov SVD",
+        origin: "Soviet Union",
+        caliber: "7.62x54mmR",
+        spec: "Semi-automatic designated marksman rifle featuring skeletonized wooden thumbhole stock and side-mounted PSO-1 scope.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/SVD_Dragunov_sniper_rifle.jpg?width=700",
+        options: ["Dragunov SVD", "PSL", "Zastava M76", "M21 SWS"]
+      },
+      {
+        name: "M1 Garand",
+        origin: "USA",
+        caliber: ".30-06 Springfield",
+        spec: "First semi-automatic rifle standard-issued to infantry; renowned for metallic 'ping' sound when en-bloc clip ejects.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/M1_Garand_rifle_cartridge.png?width=700",
+        options: ["M1 Garand", "M1 Carbine", "SVT-40", "Gewehr 43"]
+      },
+      {
+        name: "HK G3",
+        origin: "Germany",
+        caliber: "7.62x51mm NATO",
+        spec: "Cold War battle rifle utilizing roller-delayed blowback mechanism and fluted chamber; served with 40+ nations.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Gewehr_G3A3.jpg?width=700",
+        options: ["HK G3", "FN FAL", "CETME Model C", "SIG SG 510"]
+      },
+      {
+        name: "FN FAL",
+        origin: "Belgium",
+        caliber: "7.62x51mm NATO",
+        spec: "Short-stroke gas-operated battle rifle widely nicknamed 'The Right Arm of the Free World' during the Cold War.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/FN_FAL.png?width=700",
+        options: ["FN FAL", "HK G3", "M14", "AR-10"]
+      },
+      {
+        name: "Kriss Vector",
+        origin: "USA",
+        caliber: ".45 ACP / 9mm",
+        spec: "Futuristic submachine gun utilizing Super V articulated mechanism that redirects recoil energy downward.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Kriss_Vector_CRB.png?width=700",
+        options: ["Kriss Vector", "UMP-45", "PP-19 Vityaz", "APC9"]
+      },
+      {
+        name: "Benelli M4 (M1014)",
+        origin: "Italy",
+        caliber: "12 Gauge Shotgun",
+        spec: "Auto-regulating gas-operated (ARGO) semi-automatic combat shotgun adopted by the United States Marine Corps.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Benelli_M4.jpg?width=700",
+        options: ["Benelli M4 (M1014)", "SPAS-12", "Mossberg 590A1", "Remington 870"]
+      },
+      {
+        name: "Thompson Submachine Gun",
+        origin: "USA",
+        caliber: ".45 ACP",
+        spec: "Blowback SMG with finned barrel, Cutts compensator, and 50-round drum magazine; nicknamed 'Tommy Gun'.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Thompson_submachine_gun.jpg?width=700",
+        options: ["Thompson Submachine Gun", "M3 Grease Gun", "Sten Gun", "PPSh-41"]
+      },
+      {
+        name: "PPSh-41",
+        origin: "Soviet Union",
+        caliber: "7.62x25mm Tokarev",
+        spec: "Mass-produced stamped sheet-metal WWII submachine gun firing at 1,000 rounds/min, often paired with a 71-round drum.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/PPSh-41.png?width=700",
+        options: ["PPSh-41", "PPS-43", "Suomi KP/-31", "MP 40"]
+      },
+      {
+        name: "CheyTac M200 Intervention",
+        origin: "USA",
+        caliber: ".408 CheyTac",
+        spec: "Extreme long-range bolt-action sniper rifle system engineered for precision sub-MOA groupings past 2,500 yards.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/CheyTac_M200_Intervention.jpg?width=700",
+        options: ["CheyTac M200 Intervention", "Barrett M82", "AI Arctic Warfare", "DSR-1"]
+      },
+      {
+        name: "Desert Eagle",
+        origin: "USA / Israel",
+        caliber: ".50 Action Express",
+        spec: "Gas-operated rotating-bolt magnum hand cannon with triangular barrel slide, popular in cinema and gaming lore.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Desert_Eagle_50_AE.jpg?width=700",
+        options: ["Desert Eagle", "AutoMag", "S&W 500", "Colt Anaconda"]
       }
     ];
 
-    // 5. Camo & Uniform Spotter
+    // ==========================================
+    // 4. 20 CAMOUFLAGE PATTERNS (With High-Res Swatches)
+    // ==========================================
     const CAMO_ROUNDS = [
       {
         pattern: "Flecktarn",
         nation: "Germany (Bundeswehr)",
         clue: "5-color disruptive pea-dot pattern (dark green, light green, black, red-brown, olive).",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Flecktarn_(cropped).jpg?width=700",
         options: ["Germany (Bundeswehr)", "Switzerland", "Austria", "Netherlands"]
       },
       {
         pattern: "MultiCam",
         nation: "USA / International Special Ops",
-        clue: "7-color gradient pattern blending browns, khakis, and lime greens across multiple environments.",
+        clue: "7-color gradient pattern blending browns, khakis, and lime greens across diverse terrain.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Multicam_pattern_(cropped).jpg?width=700",
         options: ["USA / International Special Ops", "Russia", "Sweden", "Israel"]
       },
       {
         pattern: "M81 Woodland",
         nation: "United States (1981-2000s)",
         clue: "High-contrast 4-color pattern (sand, brown, green, black) copied by dozens of nations worldwide.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/M81_Woodland_Camoflauge_Pattern_BDU.jpg?width=700",
         options: ["United States (1981-2000s)", "France", "Spain", "Poland"]
       },
       {
         pattern: "MARPAT (Marine Pattern)",
         nation: "United States Marine Corps",
         clue: "Digital pixelated camouflage containing tiny embedded Eagle, Globe, and Anchor emblems.",
-        options: ["US Marine Corps", "British Royal Marines", "Russian VDV", "French Foreign Legion"]
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/MARPAT_desert_camouflage_swatch,_24.55%22.jpg?width=700",
+        options: ["United States Marine Corps", "British Royal Marines", "Russian VDV", "French Foreign Legion"]
       },
       {
         pattern: "CADPAT (Canadian Disruptive Pattern)",
         nation: "Canada",
         clue: "The world's first operational computerized digital camouflage system using mathematically spaced pixels.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/CADPAT_woodland_sample.jpg?width=700",
         options: ["Canada", "Norway", "Denmark", "Australia"]
       },
       {
         pattern: "Desert DPM (Disruptive Pattern Material)",
         nation: "United Kingdom",
         clue: "British Army brushstroke camouflage issued in 2-colour and 4-colour Gulf War configurations.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/DPM_desert.jpg?width=700",
         options: ["United Kingdom", "Saudi Arabia", "South Africa", "Jordan"]
       },
       {
         pattern: "M90 Splinter",
         nation: "Sweden",
         clue: "Distinct hard-edged geometric polygon camouflage designed for Nordic forests and tundra.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/M90_camo.jpg?width=700",
         options: ["Sweden", "Finland", "Estonia", "Japan"]
       },
       {
         pattern: "Tigerstripe",
         nation: "Vietnam War (US Special Forces)",
         clue: "Dense horizontal interlocking brushstrokes developed for close-quarters jungle warfare.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Tigerstripe_camo.jpg?width=700",
         options: ["Vietnam War (US Special Forces)", "Rhodesian SAS", "Cuban Troops", "Korean Marines"]
       },
       {
         pattern: "Alpenflage (TAZ 57)",
         nation: "Switzerland",
         clue: "High-contrast alpine pattern with distinctive bright red/orange patches to blend with mountain scree.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Tarnanzug_57_alpenflage.jpg?width=700",
         options: ["Switzerland", "Italy", "Austria", "Czech Republic"]
+      },
+      {
+        pattern: "EMR / Digital Flora",
+        nation: "Russian Armed Forces",
+        clue: "Dense micro-pixelated dark green and black camouflage introduced with the Ratnik combat equipment system.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/EMR_camo_sample.jpg?width=700",
+        options: ["Russian Armed Forces", "Ukraine", "Belarus", "Kazakhstan"]
+      },
+      {
+        pattern: "Auscam / DPCU",
+        nation: "Australia",
+        clue: "Nicknamed 'Jellybean Camo' due to its rounded green, tan, and brown amorphous blob shapes.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/DPCU_camo.jpg?width=700",
+        options: ["Australia", "New Zealand", "Fiji", "Singapore"]
+      },
+      {
+        pattern: "CCE (Camouflage Centre-Europe)",
+        nation: "France",
+        clue: "Four-color woodland pattern with thick horizontal stripes issued across the French Army and Foreign Legion.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/CCE_camo.jpg?width=700",
+        options: ["France", "Belgium", "Portugal", "Romania"]
+      },
+      {
+        pattern: "Rhodesian Brushstroke",
+        nation: "Rhodesian Security Forces",
+        clue: "Distinctive diagonal coarse brushstrokes in dark green and brown over light khaki; iconic bush warfare pattern.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Rhodesian_brushstroke_camo.jpg?width=700",
+        options: ["Rhodesian Security Forces", "South Africa", "Kenya", "Namibia"]
+      },
+      {
+        pattern: "Jigsaw Camouflage",
+        nation: "Belgium",
+        clue: "Interlocking puzzle-piece shapes in khaki, dark green, and reddish-brown; standard issue for 60+ years.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Belgian_Jigsaw_camo.jpg?width=700",
+        options: ["Belgium", "Netherlands", "Luxembourg", "Denmark"]
+      },
+      {
+        pattern: "M05 Military Pattern",
+        nation: "Finland (Finnish Defence Forces)",
+        clue: "Scientifically sampled Finnish forest foliage digitally rendered into 4-color micro and macro clusters.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Finnish_M05_woodland.jpg?width=700",
+        options: ["Finland (Finnish Defence Forces)", "Sweden", "Norway", "Latvia"]
+      },
+      {
+        pattern: "Desert Night Camo (DNC)",
+        nation: "United States (Gulf War)",
+        clue: "Dark green two-color grid pattern with tiny spots intended to disrupt Soviet-era night vision optics.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/DNC_pattern.jpg?width=700",
+        options: ["United States (Gulf War)", "Israel", "Saudi Arabia", "Kuwait"]
+      },
+      {
+        pattern: "Wz. 93 Pantera",
+        nation: "Poland (Polish Armed Forces)",
+        clue: "Greenish-brown amorphous amoeba spots on a pale olive-green backdrop, standard for Polish Land Forces.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/WZ.93_Pantera.jpg?width=700",
+        options: ["Poland (Polish Armed Forces)", "Czech Republic", "Slovakia", "Hungary"]
+      },
+      {
+        pattern: "Greek Lizard",
+        nation: "Greece (Hellenic Armed Forces)",
+        clue: "Horizontal brushstrokes derivative of French TAP 47 lizard pattern, optimized for Mediterranean rocky brush.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Greek_lizard_camo.jpg?width=700",
+        options: ["Greece (Hellenic Armed Forces)", "Turkey", "Cyprus", "Italy"]
+      },
+      {
+        pattern: "Taz 90",
+        nation: "Switzerland (Modern Swiss Armed Forces)",
+        clue: "Modern 4-color woodland variant that replaced the red-tinted Alpenflage across Swiss canton units.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Taz_90_camo.jpg?width=700",
+        options: ["Switzerland (Modern Swiss Armed Forces)", "Germany", "Austria", "Liechtenstein"]
+      },
+      {
+        pattern: "Mitchell Pattern / Cloud",
+        nation: "United States (USMC Vietnam Era)",
+        clue: "Reversible helmet cover pattern featuring lush overlapping green leaves on one side and brown clouds on reverse.",
+        img: "https://commons.wikimedia.org/wiki/Special:FilePath/Mitchell_pattern.jpg?width=700",
+        options: ["United States (USMC Vietnam Era)", "South Korea", "Philippines", "Australia"]
       }
     ];
 
-    // 6. Word Scramble (Office + Tactical)
-    const SCRAMBLE_WORDS = [
-      { word: "DEADLINE", hint: "Something your boss reminds you about daily" },
-      { word: "ESPRESSO", hint: "Fuel for the 9-to-5 grind" },
-      { word: "PROMOTION", hint: "The ultimate corporate reward" },
-      { word: "SPREADSHEET", hint: "Rows, columns, and endless formulas" },
-      { word: "MEETING", hint: "This could have been an email" },
-      { word: "SYNERGY", hint: "Favorite management buzzword" },
-      { word: "RECONNAISSANCE", hint: "Military mission to observe the terrain" },
-      { word: "RADAR", hint: "Detection system that works equally well forward and backwards" },
-      { word: "SUBMACHINE", hint: "Rapid-fire close quarters firearm type" },
-      { word: "SUPERSONIC", hint: "Faster than the speed of sound" },
-      { word: "CAMOUFLAGE", hint: "Art of visual concealment" },
-      { word: "TACTICAL", hint: "Calculated maneuvering under pressure" }
+    // ==========================================
+    // 5. 50 GUESS THE ERA EVENTS (1800 - 2025)
+    // ==========================================
+    const ERA_ROUNDS = [
+      { event: "Battle of Waterloo & Defeat of Napoleon", year: 1815 },
+      { event: "American Civil War Begins at Fort Sumter", year: 1861 },
+      { event: "Abraham Lincoln Delivers Gettysburg Address", year: 1863 },
+      { event: "Alexander Graham Bell Patents Electric Telephone", year: 1876 },
+      { event: "Thomas Edison Patents Incandescent Light Bulb", year: 1879 },
+      { event: "Eiffel Tower Completed for Paris Exposition", year: 1889 },
+      { event: "First Modern Olympic Games Held in Athens", year: 1896 },
+      { event: "Wright Brothers' First Powered Airplane Flight", year: 1903 },
+      { event: "San Francisco Earthquake and Great Fires", year: 1906 },
+      { event: "Henry Ford Introduces Model T Moving Assembly Line", year: 1908 },
+      { event: "Sinking of the RMS Titanic", year: 1912 },
+      { event: "Opening of the Panama Canal", year: 1914 },
+      { event: "Armistice ending World War I signed", year: 1918 },
+      { event: "Prohibition Begins in the United States", year: 1920 },
+      { event: "Discovery of King Tutankhamun's Tomb", year: 1922 },
+      { event: "Alexander Fleming Discovers Penicillin", year: 1928 },
+      { event: "Wall Street Crash triggering Great Depression", year: 1929 },
+      { event: "Amelia Earhart's Solo Transatlantic Flight", year: 1932 },
+      { event: "Attack on Pearl Harbor", year: 1941 },
+      { event: "D-Day Allied Landings in Normandy", year: 1944 },
+      { event: "End of World War II & Founding of United Nations", year: 1945 },
+      { event: "Sound Barrier Broken by Chuck Yeager (Bell X-1)", year: 1947 },
+      { event: "Double-Helix Structure of DNA Published", year: 1953 },
+      { event: "First Artificial Satellite Sputnik 1 Launched", year: 1957 },
+      { event: "First Human in Space (Yuri Gagarin)", year: 1961 },
+      { event: "Cuban Missile Crisis", year: 1962 },
+      { event: "Assassination of President John F. Kennedy", year: 1963 },
+      { event: "First Successful Human Heart Transplant", year: 1967 },
+      { event: "First Human Moon Landing (Apollo 11)", year: 1969 },
+      { event: "Concorde Supersonic Airliner Maiden Flight", year: 1969 },
+      { event: "First Commercial Boeing 747 Jumbo Jet Flight", year: 1970 },
+      { event: "Microsoft Founded by Bill Gates & Paul Allen", year: 1975 },
+      { event: "Apple Computer 1 Introduced by Wozniak & Jobs", year: 1976 },
+      { event: "Pac-Man Released in Japanese Arcades", year: 1980 },
+      { event: "Space Shuttle Columbia First Orbital Flight", year: 1981 },
+      { event: "Chernobyl Nuclear Power Plant Disaster", year: 1986 },
+      { event: "Fall of the Berlin Wall", year: 1989 },
+      { event: "Hubble Space Telescope Deployed into Orbit", year: 1990 },
+      { event: "World Wide Web Public Release (Tim Berners-Lee)", year: 1991 },
+      { event: "Dissolution of the Soviet Union", year: 1991 },
+      { event: "Original Sony PlayStation Console Debut", year: 1994 },
+      { event: "Dolly the Sheep Cloned (First Mammal Clone)", year: 1996 },
+      { event: "Deep Blue Defeats Garry Kasparov in Chess", year: 1997 },
+      { event: "Google Search Engine Founded", year: 1998 },
+      { event: "International Space Station Expedition 1 Crew Boards", year: 2000 },
+      { event: "Wikipedia Officially Launched Online", year: 2001 },
+      { event: "First Video Uploaded to YouTube ('Me at the zoo')", year: 2005 },
+      { event: "First Apple iPhone Released", year: 2007 },
+      { event: "Large Hadron Collider at CERN First Powered On", year: 2008 },
+      { event: "Bitcoin Genesis Block Mined by Satoshi Nakamoto", year: 2009 }
     ];
 
     // ==========================================
-    // MAIN APPLICATION WRAPPER
+    // 6. 40 SCRAMBLE WORDS (Office & Tactical)
+    // ==========================================
+    const SCRAMBLE_WORDS = [
+      { word: "DEADLINE", hint: "Something your boss reminds you about daily" },
+      { word: "ESPRESSO", hint: "Fuel for the morning 9-to-5 grind" },
+      { word: "PROMOTION", hint: "The ultimate corporate ladder reward" },
+      { word: "SPREADSHEET", hint: "Rows, columns, and endless formulas" },
+      { word: "MEETING", hint: "This could have been an email" },
+      { word: "SYNERGY", hint: "Favorite management buzzword" },
+      { word: "RECONNAISSANCE", hint: "Military mission to observe enemy terrain" },
+      { word: "RADAR", hint: "Detection system that works forward and backwards" },
+      { word: "SUBMACHINE", hint: "Rapid-fire close quarters firearm type" },
+      { word: "SUPERSONIC", hint: "Traveling faster than the speed of sound" },
+      { word: "CAMOUFLAGE", hint: "The visual art of battlefield concealment" },
+      { word: "TACTICAL", hint: "Calculated maneuvering under high pressure" },
+      { word: "OVERTIME", hint: "Extra hours that your paycheck remembers" },
+      { word: "PRESENTATION", hint: "Twenty slide decks that everyone stares at silently" },
+      { word: "BALLISTIC", hint: "Trajectory of projectiles under aerodynamic forces" },
+      { word: "INTERCEPTOR", hint: "High-speed fighter built to stop incoming threats" },
+      { word: "QUARTERLY", hint: "Every three months, the executive panic sets in" },
+      { word: "DELEGATION", hint: "The art of giving your tasks to somebody else" },
+      { word: "AERODYNAMICS", hint: "How air flows over wings and fuselages" },
+      { word: "AMMUNITION", hint: "Cartridges and shells loaded into magazines" },
+      { word: "WHITEBOARD", hint: "Covered in dry-erase brainstorm scribbles" },
+      { word: "BONUS", hint: "End-of-year financial motivation" },
+      { word: "SATELLITE", hint: "Orbital eye in the sky capturing imagery" },
+      { word: "FIREWALL", hint: "IT department barrier blocking outside intrusion" },
+      { word: "COFFEE", hint: "Black gold brewed in the breakroom kitchenette" },
+      { word: "PAYROLL", hint: "Everyone's favorite day of the calendar month" },
+      { word: "STRATEGY", hint: "The grand master plan before chaos arrives" },
+      { word: "CATAPULT", hint: "Steam or electromagnetic launch system on carriers" },
+      { word: "FLANKING", hint: "Attacking an adversary from the side or rear" },
+      { word: "SUPERVISOR", hint: "The person signing off on your PTO requests" },
+      { word: "WATERCOOLER", hint: "Hub of all office gossip and speculation" },
+      { word: "AFTERBURNER", hint: "Fuel injected directly into jet exhaust for maximum thrust" },
+      { word: "REMOTENESS", hint: "Working from home in your sweatpants" },
+      { word: "AIRSPACE", hint: "Sovereign skies protected by air defense systems" },
+      { word: "LOGISTICS", hint: "Supplying ammunition, food, and equipment on time" },
+      { word: "WORKSTATION", hint: "Dual monitors, mechanical keyboard, and tangled cables" },
+      { word: "SILENCER", hint: "Muzzle attachment that suppresses acoustic muzzle flash" },
+      { word: "CONSULTANT", hint: "Borrowed watch-wearer who tells you the time" },
+      { word: "TRAJECTORY", hint: "Path followed by a missile or corporate career" },
+      { word: "COCKPIT", hint: "Where pilots manage flight instruments and dogfights" }
+    ];
+
+    // ==========================================
+    // MAIN APP
     // ==========================================
     function App() {
       const [roomCode, setRoomCode] = useState('');
       const [inputCode, setInputCode] = useState('');
-      const [role, setRole] = useState(null); // 'host', 'guest', or 'solo'
+      const [role, setRole] = useState(null);
       const [connected, setConnected] = useState(false);
       const [activeGame, setActiveGame] = useState(null);
+      const [gameOffset, setGameOffset] = useState(0);
       const [scores, setScores] = useState({ host: 0, guest: 0 });
       const [statusMsg, setStatusMsg] = useState('');
       
@@ -337,6 +720,7 @@
       const handleIncomingData = (data) => {
         if (data.type === 'START_GAME') {
           setActiveGame(data.game);
+          setGameOffset(data.offset || 0);
           setStatusMsg('');
         } else if (data.type === 'UPDATE_SCORE') {
           setScores(data.scores);
@@ -362,14 +746,14 @@
           connRef.current = conn;
           conn.on('open', () => {
             setConnected(true);
-            setStatusMsg('Opponent connected! Choose a game.');
+            setStatusMsg('Opponent connected! Choose a battle.');
             playTone(600, 'sine', 0.2);
           });
           conn.on('data', handleIncomingData);
         });
 
         peer.on('error', () => {
-          setStatusMsg('Code conflict or connection reset. Please retry.');
+          setStatusMsg('Code collision or connection reset. Please retry.');
         });
       };
 
@@ -408,8 +792,10 @@
       };
 
       const selectGame = (gameId) => {
+        const offset = Math.floor(Math.random() * 50);
         setActiveGame(gameId);
-        sendData({ type: 'START_GAME', game: gameId });
+        setGameOffset(offset);
+        sendData({ type: 'START_GAME', game: gameId, offset });
       };
 
       const backToLobby = () => {
@@ -437,7 +823,7 @@
                 <h1 className="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2">
                   DuoGames <span className="text-[10px] uppercase font-bold tracking-widest bg-indigo-500/20 text-indigo-400 px-2.5 py-1 rounded-full border border-indigo-500/30">1v1 Showdown</span>
                 </h1>
-                <p className="text-xs text-slate-400">Tactical, geographical, and reaction duels</p>
+                <p className="text-xs text-slate-400">Tactical, geographical, and photo intelligence duels</p>
               </div>
             </div>
 
@@ -459,11 +845,10 @@
           {/* MAIN CONTENT AREA */}
           <main className="flex-1 flex flex-col justify-center">
             {!connected ? (
-              /* --- LOBBY VIEW --- */
               <div className="max-w-md mx-auto w-full space-y-6 bg-slate-900/70 p-6 md:p-8 rounded-3xl border border-slate-800 shadow-2xl backdrop-blur-xl">
                 <div className="text-center space-y-1">
                   <h2 className="text-2xl font-black text-white">Join the Arena</h2>
-                  <p className="text-xs text-slate-400">Play real-time against your boss or test alone</p>
+                  <p className="text-xs text-slate-400">Play real-time against your coworker or practice alone</p>
                 </div>
 
                 <div className="space-y-4">
@@ -512,7 +897,6 @@
                 )}
               </div>
             ) : !activeGame ? (
-              /* --- GAME SELECTOR --- */
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -529,35 +913,35 @@
                     title="GeoGuess 2.0" 
                     desc="Interactive satellite map. Exact KM distance tracking showdown!"
                     icon="🌍" 
-                    tag="Distance Calc"
+                    tag="50 Locations"
                     onClick={() => selectGame('geoguess')}
                   />
                   <GameCard 
                     title="Warbirds & Aircraft" 
-                    desc="Identify combat jets, bombers & WWII warbirds by silhouette and specs"
+                    desc="Identify jets, bombers & WWII fighters with photo recon cards"
                     icon="✈️" 
-                    tag="Military Recon"
+                    tag="20 Photos"
                     onClick={() => selectGame('aircraft')}
                   />
                   <GameCard 
                     title="Firearms & Rifles" 
-                    desc="Service rifles, bullpups, and snipers. Identify weapon by caliber and role"
+                    desc="Service rifles, bullpups & snipers with visual armory photos"
                     icon="🎯" 
-                    tag="Armory ID"
+                    tag="20 Photos"
                     onClick={() => selectGame('weapons')}
                   />
                   <GameCard 
                     title="Camo & Uniforms" 
-                    desc="Identify military patterns: Flecktarn, Multicam, Woodland, MARPAT & more"
+                    desc="Identify military uniforms with textured camo swatch photos"
                     icon="🪖" 
-                    tag="Spotter"
+                    tag="20 Photos"
                     onClick={() => selectGame('camo')}
                   />
                   <GameCard 
                     title="Guess the Era" 
-                    desc="Historical trivia showdown. See exact years off for both players"
+                    desc="Historical trivia showdown. See exact years off for both"
                     icon="⏳" 
-                    tag="25+ Events"
+                    tag="50 Events"
                     onClick={() => selectGame('era')}
                   />
                   <GameCard 
@@ -569,7 +953,7 @@
                   />
                   <GameCard 
                     title="Quick Draw" 
-                    desc="Reflex duel. Wait for green, click instantly without jumping the gun"
+                    desc="Reflex duel. Wait for green, click instantly without early trigger"
                     icon="⚡" 
                     tag="Speed"
                     onClick={() => selectGame('quickdraw')}
@@ -578,12 +962,12 @@
                     title="Word Scramble" 
                     desc="Office and tactical anagram sprint. Unscramble the fastest"
                     icon="🔤" 
-                    tag="Puzzle"
+                    tag="40 Words"
                     onClick={() => selectGame('scramble')}
                   />
                   <GameCard 
                     title="Tug of War" 
-                    desc="Rapid button-mashing contest. Pull the knot past the finish line"
+                    desc="Rapid button-mashing contest. Pull the knot to victory"
                     icon="🪢" 
                     tag="Mashing"
                     onClick={() => selectGame('tug')}
@@ -591,7 +975,6 @@
                 </div>
               </div>
             ) : (
-              /* --- ACTIVE GAME CONTAINER --- */
               <div className="relative">
                 <button 
                   onClick={backToLobby}
@@ -600,14 +983,14 @@
                   ← Return to Game Menu
                 </button>
 
-                {activeGame === 'geoguess' && <GeoGuess role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
-                {activeGame === 'aircraft' && <AircraftRecon role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
-                {activeGame === 'weapons' && <WeaponsRecon role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
-                {activeGame === 'camo' && <CamoSpotter role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
-                {activeGame === 'era' && <GuessEra role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+                {activeGame === 'geoguess' && <GeoGuess role={role} offset={gameOffset} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+                {activeGame === 'aircraft' && <AircraftRecon role={role} offset={gameOffset} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+                {activeGame === 'weapons' && <WeaponsRecon role={role} offset={gameOffset} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+                {activeGame === 'camo' && <CamoSpotter role={role} offset={gameOffset} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+                {activeGame === 'era' && <GuessEra role={role} offset={gameOffset} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
                 {activeGame === 'connect4' && <Connect4 role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
                 {activeGame === 'quickdraw' && <QuickDraw role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
-                {activeGame === 'scramble' && <WordScramble role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
+                {activeGame === 'scramble' && <WordScramble role={role} offset={gameOffset} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
                 {activeGame === 'tug' && <TugOfWar role={role} sendData={sendData} connRef={connRef} addPoint={addPoint} />}
               </div>
             )}
@@ -620,7 +1003,7 @@
       );
     }
 
-    // --- CARD COMPONENT ---
+    // --- GAME CARD COMPONENT ---
     function GameCard({ title, desc, icon, tag, onClick }) {
       return (
         <div 
@@ -647,30 +1030,27 @@
     }
 
     // ==========================================
-    // 1. GEOGUESS 2.0 (With Real Km Distance & Comparison)
+    // 1. GEOGUESS 2.0 (50 Landmarks + Real Km)
     // ==========================================
-    function GeoGuess({ role, sendData, connRef, addPoint }) {
+    function GeoGuess({ role, offset, sendData, connRef, addPoint }) {
       const [roundIdx, setRoundIdx] = useState(0);
       const [myPin, setMyPin] = useState(null);
       const [oppPin, setOppPin] = useState(null);
       const [revealed, setRevealed] = useState(false);
       const [roundWinner, setRoundWinner] = useState(null);
 
-      const current = GEO_ROUNDS[roundIdx % GEO_ROUNDS.length];
+      const effectiveIdx = (roundIdx + offset) % GEO_ROUNDS.length;
+      const current = GEO_ROUNDS[effectiveIdx];
 
       useEffect(() => {
         if (!connRef.current) return;
         const handler = (data) => {
-          if (data.type === 'GEO_PIN') {
-            setOppPin(data.pin);
-          } else if (data.type === 'GEO_NEXT') {
-            nextRound();
-          }
+          if (data.type === 'GEO_PIN') setOppPin(data.pin);
+          else if (data.type === 'GEO_NEXT') nextRound();
         };
         connRef.current.on('data', handler);
       }, [roundIdx]);
 
-      // Calculate distances once pins are placed
       useEffect(() => {
         if (myPin && (role === 'solo' || oppPin)) {
           setRevealed(true);
@@ -717,12 +1097,11 @@
       return (
         <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl max-w-4xl mx-auto flex flex-col items-center select-none shadow-2xl">
           <div className="text-center mb-4">
-            <span className="text-[11px] uppercase tracking-widest text-indigo-400 font-black">Round {roundIdx + 1} of {GEO_ROUNDS.length}</span>
+            <span className="text-[11px] uppercase tracking-widest text-indigo-400 font-black">Landmark {roundIdx + 1} of {GEO_ROUNDS.length}</span>
             <h3 className="text-2xl md:text-3xl font-black text-white mt-1">{current.name}</h3>
             <p className="text-xs text-slate-400 italic mt-0.5">Clue: {current.hint}</p>
           </div>
 
-          {/* SATELLITE MAP CONTAINER */}
           <div 
             onClick={handleMapClick}
             className="relative w-full aspect-[2/1] bg-slate-950 rounded-2xl border-2 border-slate-700/80 overflow-hidden cursor-crosshair shadow-2xl"
@@ -734,7 +1113,6 @@
               className="w-full h-full object-fill pointer-events-none filter brightness-90 contrast-110 saturate-125"
             />
 
-            {/* Flight Path Lines (SVG Overlay) */}
             {revealed && (
               <svg className="absolute inset-0 w-full h-full pointer-events-none">
                 {myPin && (
@@ -754,7 +1132,6 @@
               </svg>
             )}
 
-            {/* Actual Target Pin */}
             {revealed && (
               <>
                 <div 
@@ -770,7 +1147,6 @@
               </>
             )}
 
-            {/* Player's Pin */}
             {myPin && (
               <div 
                 className="absolute w-4 h-4 bg-indigo-500 rounded-full -translate-x-1/2 -translate-y-1/2 border-2 border-white shadow-lg pointer-events-none ring-2 ring-indigo-400/50"
@@ -778,7 +1154,6 @@
               />
             )}
 
-            {/* Opponent's Pin */}
             {oppPin && revealed && (
               <div 
                 className="absolute w-4 h-4 bg-rose-500 rounded-full -translate-x-1/2 -translate-y-1/2 border-2 border-white shadow-lg pointer-events-none ring-2 ring-rose-400/50"
@@ -787,7 +1162,6 @@
             )}
           </div>
 
-          {/* ROUND COMPARISON STATS */}
           {revealed ? (
             <div className="w-full mt-6 bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4">
               <div className="grid grid-cols-2 gap-4 text-center">
@@ -803,7 +1177,7 @@
                   </div>
                 ) : (
                   <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl">
-                    <div className="text-[11px] font-bold text-slate-400 uppercase">Proximity</div>
+                    <div className="text-[11px] font-bold text-slate-400 uppercase">Accuracy</div>
                     <div className="text-2xl font-black text-emerald-400 mt-0.5">{myDist < 500 ? "🎯 Bullseye!" : myDist < 2000 ? "👍 Close" : "🌍 Distant"}</div>
                   </div>
                 )}
@@ -816,7 +1190,7 @@
                   ) : roundWinner === 'opp' ? (
                     <span className="text-rose-400">💥 Opponent was closer by {(myDist - oppDist).toLocaleString()} km!</span>
                   ) : (
-                    <span className="text-slate-400">It's a dead heat tie!</span>
+                    <span className="text-slate-400">It's an exact tie!</span>
                   )}
                 </div>
               )}
@@ -838,15 +1212,16 @@
     }
 
     // ==========================================
-    // 2. RECON: COMBAT WARBIRDS & AIRCRAFT
+    // 2. RECON: COMBAT AIRCRAFT (With Visual Photos)
     // ==========================================
-    function AircraftRecon({ role, sendData, connRef, addPoint }) {
-      const [idx, setIdx] = useState(0);
+    function AircraftRecon({ role, offset, sendData, connRef, addPoint }) {
+      const [roundIdx, setRoundIdx] = useState(0);
       const [myPick, setMyPick] = useState(null);
       const [oppPick, setOppPick] = useState(null);
       const [resolved, setResolved] = useState(false);
 
-      const cur = AIRCRAFT_ROUNDS[idx % AIRCRAFT_ROUNDS.length];
+      const effectiveIdx = (roundIdx + offset) % AIRCRAFT_ROUNDS.length;
+      const cur = AIRCRAFT_ROUNDS[effectiveIdx];
 
       useEffect(() => {
         if (!connRef.current) return;
@@ -854,7 +1229,7 @@
           if (d.type === 'AIR_ANSWER') setOppPick(d.answer);
           else if (d.type === 'AIR_NEXT') next();
         });
-      }, [idx]);
+      }, [roundIdx]);
 
       useEffect(() => {
         if (myPick && (role === 'solo' || oppPick)) {
@@ -865,8 +1240,6 @@
           if (role !== 'solo') {
             if (iAmRight && !oppRight) addPoint(role);
             else if (oppRight && !iAmRight) addPoint(role === 'host' ? 'guest' : 'host');
-          } else if (iAmRight) {
-            playTone(800, 'sine', 0.15);
           }
         }
       }, [myPick, oppPick]);
@@ -882,23 +1255,39 @@
         setMyPick(null);
         setOppPick(null);
         setResolved(false);
-        setIdx(i => i + 1);
+        setRoundIdx(i => i + 1);
       };
 
       return (
         <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl max-w-xl mx-auto space-y-6 shadow-2xl">
           <div className="flex justify-between items-center">
             <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Combat Aircraft ID</span>
-            <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Target #{idx + 1}</span>
+            <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Target {roundIdx + 1} of {AIRCRAFT_ROUNDS.length}</span>
           </div>
 
-          <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 text-center space-y-3">
-            <div className="text-5xl">{cur.icon}</div>
-            <div className="text-xs font-bold uppercase tracking-wider text-emerald-400">{cur.role}</div>
-            <p className="text-xs text-slate-300 leading-relaxed font-mono bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-              "{cur.spec}"
-            </p>
-            <div className="text-[11px] text-slate-500">Country of Origin: <span className="text-slate-300 font-bold">{cur.origin}</span></div>
+          {/* Visual Aircraft Photo Recon */}
+          <div className="relative w-full h-56 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center group shadow-inner">
+            <img 
+              src={cur.img} 
+              alt="Aircraft Target"
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover filter contrast-105 group-hover:scale-105 transition duration-300"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+            <div className="hidden absolute inset-0 items-center justify-center text-5xl">
+              ✈️
+            </div>
+            <div className="absolute bottom-2 left-2 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-800 text-[10px] font-mono text-emerald-400">
+              Role: {cur.role}
+            </div>
+          </div>
+
+          <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1">
+            <div className="text-xs text-slate-400">Origin: <strong className="text-white">{cur.origin}</strong></div>
+            <p className="text-xs text-slate-300 font-mono leading-relaxed">"{cur.spec}"</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -948,15 +1337,16 @@
     }
 
     // ==========================================
-    // 3. RECON: FIREARMS & RIFLES
+    // 3. RECON: FIREARMS & RIFLES (With Visual Photos)
     // ==========================================
-    function WeaponsRecon({ role, sendData, connRef, addPoint }) {
-      const [idx, setIdx] = useState(0);
+    function WeaponsRecon({ role, offset, sendData, connRef, addPoint }) {
+      const [roundIdx, setRoundIdx] = useState(0);
       const [myPick, setMyPick] = useState(null);
       const [oppPick, setOppPick] = useState(null);
       const [resolved, setResolved] = useState(false);
 
-      const cur = WEAPON_ROUNDS[idx % WEAPON_ROUNDS.length];
+      const effectiveIdx = (roundIdx + offset) % WEAPON_ROUNDS.length;
+      const cur = WEAPON_ROUNDS[effectiveIdx];
 
       useEffect(() => {
         if (!connRef.current) return;
@@ -964,7 +1354,7 @@
           if (d.type === 'WEAPON_ANSWER') setOppPick(d.answer);
           else if (d.type === 'WEAPON_NEXT') next();
         });
-      }, [idx]);
+      }, [roundIdx]);
 
       useEffect(() => {
         if (myPick && (role === 'solo' || oppPick)) {
@@ -990,26 +1380,39 @@
         setMyPick(null);
         setOppPick(null);
         setResolved(false);
-        setIdx(i => i + 1);
+        setRoundIdx(i => i + 1);
       };
 
       return (
         <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl max-w-xl mx-auto space-y-6 shadow-2xl">
           <div className="flex justify-between items-center">
             <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Armory Service Rifle ID</span>
-            <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Weapon #{idx + 1}</span>
+            <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Weapon {roundIdx + 1} of {WEAPON_ROUNDS.length}</span>
           </div>
 
-          <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-xs font-mono font-bold text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-lg border border-amber-400/20">
-                Caliber: {cur.caliber}
-              </span>
-              <span className="text-xs text-slate-400">Origin: <strong className="text-white">{cur.origin}</strong></span>
+          {/* Visual Weapon Photo */}
+          <div className="relative w-full h-52 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center p-4 shadow-inner">
+            <img 
+              src={cur.img} 
+              alt="Weapon Silhouette"
+              referrerPolicy="no-referrer"
+              className="max-w-full max-h-full object-contain filter drop-shadow-2xl"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+            <div className="hidden absolute inset-0 items-center justify-center text-5xl">
+              🎯
             </div>
-            <p className="text-xs text-slate-300 font-mono bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 leading-relaxed">
-              "{cur.spec}"
-            </p>
+            <div className="absolute top-2 right-2 bg-amber-400/10 border border-amber-400/20 text-amber-300 px-2.5 py-0.5 rounded-lg text-[10px] font-mono font-bold">
+              Caliber: {cur.caliber}
+            </div>
+          </div>
+
+          <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-1">
+            <div className="text-xs text-slate-400">Origin: <strong className="text-white">{cur.origin}</strong></div>
+            <p className="text-xs text-slate-300 font-mono leading-relaxed">"{cur.spec}"</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -1059,15 +1462,16 @@
     }
 
     // ==========================================
-    // 4. CAMO & UNIFORM SPOTTER
+    // 4. CAMO & UNIFORM SPOTTER (With Textured Swatch Photos)
     // ==========================================
-    function CamoSpotter({ role, sendData, connRef, addPoint }) {
-      const [idx, setIdx] = useState(0);
+    function CamoSpotter({ role, offset, sendData, connRef, addPoint }) {
+      const [roundIdx, setRoundIdx] = useState(0);
       const [myPick, setMyPick] = useState(null);
       const [oppPick, setOppPick] = useState(null);
       const [resolved, setResolved] = useState(false);
 
-      const cur = CAMO_ROUNDS[idx % CAMO_ROUNDS.length];
+      const effectiveIdx = (roundIdx + offset) % CAMO_ROUNDS.length;
+      const cur = CAMO_ROUNDS[effectiveIdx];
 
       useEffect(() => {
         if (!connRef.current) return;
@@ -1075,7 +1479,7 @@
           if (d.type === 'CAMO_ANSWER') setOppPick(d.answer);
           else if (d.type === 'CAMO_NEXT') next();
         });
-      }, [idx]);
+      }, [roundIdx]);
 
       useEffect(() => {
         if (myPick && (role === 'solo' || oppPick)) {
@@ -1101,24 +1505,39 @@
         setMyPick(null);
         setOppPick(null);
         setResolved(false);
-        setIdx(i => i + 1);
+        setRoundIdx(i => i + 1);
       };
 
       return (
         <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl max-w-xl mx-auto space-y-6 shadow-2xl">
           <div className="flex justify-between items-center">
             <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Military Camo Spotter</span>
-            <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Pattern #{idx + 1}</span>
+            <span className="text-xs bg-slate-950 px-3 py-1 rounded-full border border-slate-800 text-slate-400">Pattern {roundIdx + 1} of {CAMO_ROUNDS.length}</span>
           </div>
 
-          <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 text-center space-y-2">
-            <div className="text-3xl font-black text-white">{cur.pattern}</div>
-            <p className="text-xs text-slate-400 italic mt-1 leading-relaxed">
-              "{cur.clue}"
-            </p>
+          {/* Textured Camouflage Swatch Preview */}
+          <div className="relative w-full h-56 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-inner group">
+            <img 
+              src={cur.img} 
+              alt="Camouflage Swatch"
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover filter contrast-110 saturate-110 group-hover:scale-105 transition duration-300"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+            <div className="hidden absolute inset-0 items-center justify-center text-5xl">
+              🪖
+            </div>
+            <div className="absolute top-2 left-2 bg-slate-950/80 backdrop-blur-md px-3 py-1 rounded-lg border border-slate-800 text-sm font-black text-white">
+              {cur.pattern}
+            </div>
           </div>
 
-          <div className="text-center text-xs font-bold text-slate-400">Which military / nation fielded this pattern?</div>
+          <p className="text-xs text-slate-400 italic text-center px-4">"{cur.clue}"</p>
+
+          <div className="text-center text-xs font-bold text-slate-400">Which military or nation fielded this uniform?</div>
 
           <div className="grid grid-cols-2 gap-3">
             {cur.options.map((opt, i) => {
@@ -1167,16 +1586,17 @@
     }
 
     // ==========================================
-    // 5. GUESS THE ERA 2.0 (With Side-by-Side Breakdown)
+    // 5. GUESS THE ERA 2.0 (50 Events)
     // ==========================================
-    function GuessEra({ role, sendData, connRef, addPoint }) {
-      const [idx, setIdx] = useState(0);
-      const [val, setVal] = useState(1960);
+    function GuessEra({ role, offset, sendData, connRef, addPoint }) {
+      const [roundIdx, setRoundIdx] = useState(0);
+      const [val, setVal] = useState(1950);
       const [myGuess, setMyGuess] = useState(null);
       const [oppGuess, setOppGuess] = useState(null);
       const [show, setShow] = useState(false);
 
-      const cur = ERA_ROUNDS[idx % ERA_ROUNDS.length];
+      const effectiveIdx = (roundIdx + offset) % ERA_ROUNDS.length;
+      const cur = ERA_ROUNDS[effectiveIdx];
 
       useEffect(() => {
         if (!connRef.current) return;
@@ -1184,7 +1604,7 @@
           if (d.type === 'ERA_GUESS') setOppGuess(d.year);
           else if (d.type === 'ERA_NEXT') next();
         });
-      }, [idx]);
+      }, [roundIdx]);
 
       useEffect(() => {
         if (myGuess !== null && (role === 'solo' || oppGuess !== null)) {
@@ -1208,12 +1628,12 @@
         setMyGuess(null);
         setOppGuess(null);
         setShow(false);
-        setIdx(i => i + 1);
+        setRoundIdx(i => i + 1);
       };
 
       return (
         <div className="bg-slate-900 border border-slate-800 p-6 md:p-8 rounded-3xl max-w-lg mx-auto text-center space-y-6 shadow-2xl">
-          <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Round {idx + 1} of {ERA_ROUNDS.length}</span>
+          <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Event {roundIdx + 1} of {ERA_ROUNDS.length}</span>
           <h3 className="text-xl md:text-2xl font-black text-white">{cur.event}</h3>
 
           <div className="text-6xl font-black font-mono text-indigo-400 py-1">
@@ -1224,7 +1644,7 @@
             <div className="space-y-5">
               <input 
                 type="range" 
-                min="1890" 
+                min="1800" 
                 max="2025" 
                 value={val} 
                 onChange={(e) => setVal(Number(e.target.value))}
@@ -1500,14 +1920,15 @@
     }
 
     // ==========================================
-    // 8. WORD SCRAMBLE
+    // 8. WORD SCRAMBLE (40 Words)
     // ==========================================
-    function WordScramble({ role, sendData, connRef, addPoint }) {
-      const [idx, setIdx] = useState(0);
+    function WordScramble({ role, offset, sendData, connRef, addPoint }) {
+      const [roundIdx, setRoundIdx] = useState(0);
       const [input, setInput] = useState('');
       const [winner, setWinner] = useState(null);
 
-      const cur = SCRAMBLE_WORDS[idx % SCRAMBLE_WORDS.length];
+      const effectiveIdx = (roundIdx + offset) % SCRAMBLE_WORDS.length;
+      const cur = SCRAMBLE_WORDS[effectiveIdx];
       const scrambled = cur.word.split('').sort(() => 0.5 - Math.random()).join('');
 
       useEffect(() => {
@@ -1516,7 +1937,7 @@
           if (d.type === 'SCRAMBLE_WIN') setWinner(d.winner);
           else if (d.type === 'SCRAMBLE_NEXT') next();
         });
-      }, [idx]);
+      }, [roundIdx]);
 
       const handleSubmit = (e) => {
         e.preventDefault();
@@ -1534,12 +1955,12 @@
       const next = () => {
         setWinner(null);
         setInput('');
-        setIdx(i => i + 1);
+        setRoundIdx(i => i + 1);
       };
 
       return (
         <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl max-w-md mx-auto text-center space-y-6 shadow-2xl">
-          <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Word #{idx + 1} of {SCRAMBLE_WORDS.length}</span>
+          <span className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Word {roundIdx + 1} of {SCRAMBLE_WORDS.length}</span>
           
           <div className="p-6 bg-slate-950 rounded-2xl border border-slate-800">
             <div className="text-4xl font-mono font-black tracking-widest text-emerald-400">{scrambled}</div>
